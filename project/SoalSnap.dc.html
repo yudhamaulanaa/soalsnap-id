@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@500;600;700;800;900&amp;family=Onest:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#F2F4F1;color:#182420;font-family:'Onest',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#0E8A7B;text-decoration:none}a:hover{color:#0A6E62;text-decoration:underline}
+button,input,textarea{font-family:'Onest',system-ui,sans-serif}
+::selection{background:#CDEBE4}
+@keyframes scanline{0%{top:6%}50%{top:88%}100%{top:6%}}
+@keyframes popin{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column">
+<header style="background:#FFFFFF;border-bottom:1px solid #E3E7E2;position:sticky;top:0;z-index:50">
+  <div style="max-width:1160px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;gap:16px">
+    <button onClick="{{ goDash }}" style="display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:0">
+      <span style="width:34px;height:34px;border-radius:11px;background:#0E8A7B;display:grid;place-items:center;color:#FFFFFF">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+      </span>
+      <span style="font-family:'Gabarito',sans-serif;font-weight:800;font-size:21px;color:#182420">Soal<span style="color:#0E8A7B">Snap</span></span>
+    </button>
+    <div style="flex:1;display:flex;justify-content:center">
+      <sc-if value="{{ flowMode }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:8px">
+          <sc-for list="{{ steps }}" as="s" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="{{ s.numStyle }}">{{ s.n }}</span>
+              <span style="{{ s.labStyle }}">{{ s.label }}</span>
+              <span style="{{ s.lineStyle }}"></span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+    <sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{ goUpload }}" style="display:flex;align-items:center;gap:8px;background:#0E8A7B;color:#FFFFFF;border:none;border-radius:999px;padding:11px 20px;font-family:'Gabarito',sans-serif;font-weight:700;font-size:15px;cursor:pointer" style-hover="background:#0A6E62">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+        Buat dari Foto
+      </button>
+    </sc-if>
+    <sc-if value="{{ flowMode }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ goDash }}" style="background:none;border:1px solid #E3E7E2;border-radius:999px;padding:9px 18px;font-weight:600;font-size:14px;color:#5B6963;cursor:pointer" style-hover="border-color:#B8CFC9;color:#182420">Keluar</button>
+    </sc-if>
+  </div>
+</header>
+<main style="flex:1">
+
+<sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
+  <div style="max-width:1160px;margin:0 auto;padding:36px 24px 72px;display:flex;flex-direction:column;gap:32px">
+    <section style="background:#0E3F39;border-radius:26px;padding:48px;color:#FFFFFF;position:relative;overflow:hidden;display:flex;align-items:center;gap:40px">
+      <div style="position:absolute;top:-120px;right:-60px;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle, rgba(109,90,230,.45), transparent 65%)"></div>
+      <div style="flex:1;position:relative;display:flex;flex-direction:column;gap:16px;min-width:300px">
+        <div style="align-self:flex-start;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;color:#9FE8DA">Didukung AI — tanpa ketik manual</div>
+        <h1 style="margin:0;font-family:'Gabarito',sans-serif;font-weight:800;font-size:42px;line-height:1.1;text-wrap:pretty">Foto soalnya,<br>jadi latihannya.</h1>
+        <p style="margin:0;font-size:16px;line-height:1.6;color:#BFE0D9;max-width:440px;text-wrap:pretty">Unggah foto, PDF, atau dokumen soal — AI memecahnya menjadi latihan interaktif yang siap dimainkan siswa lewat satu tautan.</p>
+        <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">
+          <button onClick="{{ goUpload }}" style="display:flex;align-items:center;gap:10px;background:#FFFFFF;color:#0E3F39;border:none;border-radius:999px;padding:14px 26px;font-family:'Gabarito',sans-serif;font-weight:700;font-size:16px;cursor:pointer" style-hover="transform:translateY(-2px)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+            Buat dari Foto
+          </button>
+          <button onClick="{{ demoPlay }}" style="background:transparent;color:#FFFFFF;border:1.5px solid rgba(255,255,255,.35);border-radius:999px;padding:14px 24px;font-weight:600;font-size:15px;cursor:pointer" style-hover="border-color:#FFFFFF;background:rgba(255,255,255,.08)">Lihat contoh hasil</button>
+        </div>
+      </div>
+      <div style="position:relative;width:300px;height:220px;flex-shrink:0;animation:floaty 5s ease-in-out infinite">
+        <div style="position:absolute;left:0;top:14px;width:132px;height:176px;background:#FFF9EC;border-radius:12px;transform:rotate(-5deg);box-shadow:0 16px 36px rgba(0,0,0,.3);padding:14px;display:flex;flex-direction:column;gap:7px">
+          <div style="height:8px;width:70%;background:#D8D2C2;border-radius:4px"></div>
+          <div style="height:6px;width:95%;background:#E4DFD1;border-radius:4px"></div>
+          <div style="height:6px;width:88%;background:#E4DFD1;border-radius:4px"></div>
+          <div style="height:6px;width:92%;background:#CDE8E1;border-radius:4px"></div>
+          <div style="height:6px;width:60%;background:#E4DFD1;border-radius:4px"></div>
+          <div style="height:6px;width:90%;background:#E4DFD1;border-radius:4px"></div>
+          <div style="height:6px;width:75%;background:#CDE8E1;border-radius:4px"></div>
+          <div style="height:6px;width:85%;background:#E4DFD1;border-radius:4px"></div>
+        </div>
+        <div style="position:absolute;left:118px;top:86px;width:44px;height:44px;border-radius:50%;background:#6D5AE6;display:grid;place-items:center;color:#FFFFFF;box-shadow:0 8px 20px rgba(109,90,230,.5);z-index:2">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        </div>
+        <div style="position:absolute;right:0;top:0;width:150px;height:190px;background:#FFFFFF;border-radius:14px;transform:rotate(4deg);box-shadow:0 16px 36px rgba(0,0,0,.3);padding:14px;display:flex;flex-direction:column;gap:8px">
+          <div style="align-self:flex-start;background:#ECE8FC;color:#6D5AE6;border-radius:999px;padding:3px 8px;font-size:9px;font-weight:700">KUIS · SOAL 1/8</div>
+          <div style="height:8px;width:90%;background:#182420;border-radius:4px;opacity:.85"></div>
+          <div style="height:8px;width:65%;background:#182420;border-radius:4px;opacity:.85"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">
+            <div style="height:26px;border-radius:8px;border:1.5px solid #E3E7E2"></div>
+            <div style="height:26px;border-radius:8px;background:#0E8A7B"></div>
+            <div style="height:26px;border-radius:8px;border:1.5px solid #E3E7E2"></div>
+            <div style="height:26px;border-radius:8px;border:1.5px solid #E3E7E2"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <h2 style="margin:0;font-family:'Gabarito',sans-serif;font-weight:700;font-size:24px">Aktivitas Saya</h2>
+        <span style="background:#E1EAE7;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700;color:#41544E">{{ dashCount }}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:18px">
+        <button onClick="{{ goUpload }}" style="border:2px dashed #B8CFC9;border-radius:20px;background:rgba(255,255,255,.6);min-height:230px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;cursor:pointer" style-hover="border-color:#0E8A7B;background:#FFFFFF">
+          <span style="width:52px;height:52px;border-radius:16px;background:#DCF1EC;display:grid;place-items:center;color:#0E8A7B">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+          </span>
+          <span style="font-family:'Gabarito',sans-serif;font-weight:700;font-size:17px;color:#182420">Buat dari Foto</span>
+          <span style="font-size:13px;color:#5B6963">JPG · PNG · PDF · DOCX · Teks</span>
+        </button>
+        <sc-if value="{{ published }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#FFFFFF;border:2px solid #0E8A7B;border-radius:20px;overflow:hidden;display:flex;flex-direction:column;animation:popin .3s ease">
+            <div style="height:86px;background:#DCF1EC;position:relative;display:grid;place-items:center">
+              <span style="position:absolute;top:10px;left:12px;background:#0E8A7B;color:#FFFFFF;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700">BARU</span>
+              <span style="background:#FFFFFF;border-radius:999px;padding:5px 14px;font-size:12px;font-weight:700;color:#0E8A7B">{{ tplLabel }}</span>
+            </div>
+            <div style="padding:16px;display:flex;flex-direction:column;gap:6px;flex:1">
+              <div style="font-weight:700;font-size:16px">{{ title }}</div>
+              <div style="font-size:13px;color:#5B6963">{{ qCount }} soal · dari 2 halaman foto</div>
+              <div style="display:flex;gap:8px;margin-top:auto;padding-top:12px">
+                <button onClick="{{ startPlay }}" style="flex:1;background:#0E8A7B;color:#FFFFFF;border:none;border-radius:10px;padding:9px 0;font-weight:700;font-size:13px;cursor:pointer" style-hover="background:#0A6E62">Mainkan</button>
+                <button onClick="{{ goPublish }}" style="flex:1;background:none;border:1px solid #E3E7E2;border-radius:10px;padding:9px 0;font-weight:600;font-size:13px;color:#41544E;cursor:pointer" style-hover="border-color:#B8CFC9">Bagikan</button>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-for list="{{ dashCards }}" as="c" hint-placeholder-count="8">
+          <div style="background:#FFFFFF;border:1px solid #E3E7E2;border-radius:20px;overflow:hidden;display:flex;flex-direction:column" style-hover="box-shadow:0 8px 24px rgba(24,36,32,.08)">
+            <div style="{{ c.bandStyle }}">
+              <span style="background:#FFFFFF;border-radius:999px;padding:5px 14px;font-size:12px;font-weight:700;color:#41544E">{{ c.tpl }}</span>
+            </div>
+            <div style="padding:16px;display:flex;flex-direction:column;gap:6px;flex:1">
+              <div style="font-weight:700;font-size:16px">{{ c.title }}</div>
+              <div style="font-size:13px;color:#5B6963">{{ c.meta }}</div>
+              <div style="display:flex;gap:8px;margin-top:auto;padding-top:12px">
+                <button onClick="{{ c.onPlay }}" style="{{ c.playStyle }}">{{ c.playLabel }}</button>
+                <button style="width:38px;background:none;border:1px solid #E3E7E2;border-radius:10px;color:#5B6963;cursor:pointer;display:grid;place-items:center" style-hover="border-color:#B8CFC9" title="Salin tautan">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isUpload }}" hint-placeholder-val="{{ false }}">
+  <div style="max-width:740px;margin:0 auto;padding:40px 24px 72px;display:flex;flex-direction:column;gap:22px">
+    <div>
+      <h1 style="margin:0 0 6px;font-family:'Gabarito',sans-serif;font-weight:800;font-size:32px">Unggah soal</h1>
+      <p style="margin:0;color:#5B6963;font-size:15px;line-height:1.55">Foto buku, lembar kerja, PDF, atau dokumen — beberapa halaman sekaligus juga bisa.</p>
+    </div>
+    <div onClick="{{ addFile }}" style="border:2px dashed #B8CFC9;border-radius:22px;background:#FFFFFF;padding:44px 24px;display:flex;flex-direction:column;align-items:center;gap:12px;cursor:pointer;text-align:center" style-hover="border-color:#0E8A7B;background:#F7FBFA">
+      <span style="width:60px;height:60px;border-radius:18px;background:#DCF1EC;display:grid;place-items:center;color:#0E8A7B">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2"></path><path d="M12 12v9M8 17l4-4 4 4"></path></svg>
+      </span>
+      <div style="font-family:'Gabarito',sans-serif;font-weight:700;font-size:19px">Seret &amp; letakkan file di sini</div>
+      <div style="font-size:14px;color:#5B6963">atau pilih salah satu cara di bawah</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:4px">
+        <button onClick="{{ addFile }}" style="background:#0E8A7B;color:#FFFFFF;border:none;border-radius:999px;padding:11px 22px;font-family:'Gabarito',sans-serif;font-weight:700;font-size:14px;cursor:pointer" style-hover="background:#0A6E62">Pilih File</button>
+        <button onClick="{{ addFile }}" style="background:none;border:1.5px solid #D6DDD9;border-radius:999px;padding:11px 20px;font-weight:600;font-size:14px;color:#41544E;cursor:pointer" style-hover="border-color:#0E8A7B;color:#0E8A7B">Ambil Foto</button>
+        <button onClick="{{ addText }}" style="background:none;border:1.5px solid #D6DDD9;border-radius:999px;padding:11px 20px;font-weight:600;font-size:14px;color:#41544E;cursor:pointer" style-hover="border-color:#0E8A7B;color:#0E8A7B">Tempel Teks</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px;width:100%;max-width:320px">
+        <span style="flex:1;height:1px;background:#E3E7E2"></span>
+        <span style="font-size:12px;font-weight:600;color:#9AA6A1">atau</span>
+        <span style="flex:1;height:1px;background:#E3E7E2"></span>
+      </div>
+      <div style="display:flex;justify-content:center">
+        <button onClick="{{ startManual }}" style="display:flex;align-items:center;gap:8px;background:none;border:1.5px solid #D6DDD9;border-radius:999px;padding:11px 20px;font-weight:600;font-size:14px;color:#41544E;cursor:pointer" style-hover="border-color:#6D5AE6;color:#6D5AE6">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
+          Ketik soal manual tanpa upload
+        </button>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <span style="background:#EEF3F1;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:700;color:#5B6963">JPG</span>
+        <span style="background:#EEF3F1;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:700;color:#5B6963">PNG</span>
+        <span style="background:#EEF3F1;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:700;color:#5B6963">PDF</span>
+        <span style="background:#EEF3F1;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:700;color:#5B6963">DOCX</span>
+      </div>
+    </div>
+    <sc-if value="{{ hasFiles }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ files }}" as="f" hint-placeholder-count="2">
+          <div style="background:#FFFFFF;border:1px solid #E3E7E2;border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;animation:popin .25s ease">
+            <span style="width:38px;height:38px;border-radius:10px;background:#ECE8FC;display:grid;place-items:center;color:#6D5AE6;flex-shrink:0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path></svg>
+            </span>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;font-size:14px">{{ f.name }}</div>
+              <div style="font-size:12px;color:#5B6963">{{ f.size }}</div>
+            </div>
+            <span style="background:#DCF1EC;color:#0A6E62;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700">Siap</span>
+            <button onClick="{{ f.onRemove }}" style="width:30px;height:30px;border:none;background:none;color:#9AA6A1;cursor:pointer;border-radius:8px;display:grid;place-items:center" style-hover="background:#FCE9E9;color:#D64545">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+            </button>
+          </div>
+        </sc-for>
+        <button onClick="{{ startProses }}" style="align-self:flex-end;display:flex;align-items:center;gap:10px;background:#0E8A7B;color:#FFFFFF;border:none;border-radius:999px;padding:14px 28px;font-family:'Gabarito',sans-serif;font-weight:700;font-size:16px;cursor:pointer;margin-top:6px" style-hover="background:#0A6E62;transform:translateY(-2px)">
+          Proses {{ fileCount }} file dengan AI
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        </button>
+      </div>
+    </sc-if>
+    <div style="background:#ECE8FC;border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:8px">
+      <div style="font-weight:700;font-size:14px;color:#4A3DB8">Tips hasil terbaik</div>
+      <div style="font-size:13.5px;color:#4A3DB8;line-height:1.6;opacity:.85">Pastikan teks terbaca jelas dan tidak terpotong · Kunci jawaban di dokumen ikut terdeteksi otomatis · Satu unggahan boleh berisi banyak nomor dan halaman</div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isProses }}" hint-placeholder-val="{{ false }}">
+  <div style="max-width:620px;margin:0 auto;padding:56px 24px 72px">
+    <div style="background:#FFFFFF;border:1px solid #E3E7E2;border-radius:26px;padding:48px 40px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center">
+      <div style="width:150px;height:200px;background:#FFF9EC;border:1px solid #EAE3D2;border-radius:12px;position:relative;overflow:hidden;padding:16px;display:flex;flex-direction:column;gap:9px">
+        <div style="height:8px;width:65%;background:#D8D2C2;border-radius:4px"></div>
+        <div style="height:6px;width:95%;background:#E4DFD1;border-radius:4px"></div>
+        <div style="height:6px;width:88%;background:#E4DFD1;border-radius:4px"></div>
+        <div style="height:6px;width:92%;background:#B9E2D8;border-radius:4px"></div>
+        <div style="height:6px;width:55%;background:#E4DFD1;border-radius:4px"></div>
+        <div style="height:6px;width:90%;background:#E4DFD1;border-radius:4px"></div>
+        <div style="height:6px;width:78%;background:#B9E2D8;border-radius:4px"></div>
+        <div style="height:6px;width:85%;background:#E4DFD1;border-radius:4px"></div>
+        <div style="height:6px;width:70%;background:#B9E2D8;border-radius:4px"></div>
+        <div style="position:absolute;left:8px;right:8px;height:3px;background:#0E8A7B;border-radius:2px;box-shadow:0 0 14px rgba(14,138,123,.8);animation:scanline 2.2s ease-in-out infinite"></div>
+      </div>
+      <h2 style="margin:24px 0 0;font-family:'Gabarito',sans-serif;font-weight:700;font-size:24px">AI sedang membaca soalmu…</h2>
+      <div style="font-family:'Gabarito',sans-serif;font-weight:800;font-size:36px;color:#0E8A7B">{{ progressPct }}</div>
+      <div style="width:100%;height:10px;background:#E7EDEA;border-radius:999px;overflow:hidden">
+        <div style="{{ barStyle }}"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:20px;align-items:flex-start">
+        <sc-for list="{{ aiSteps }}" as="s" hint-placeholder-count="4">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="{{ s.iconStyle }}">{{ s.icon }}</span>
+            <span style="{{ s.labStyle }}">{{ s.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isReview }}" hint-placeholder-val="{{ false }}">
+  <div style="max-width:1160px;margin:0 auto;padding:36px 24px 80px;display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap">
+      <div style="flex:1;min-width:300px">
+        <h1 style="margin:0 0 6px;font-family:'Gabarito',sans-serif;font-weight:800;font-size:30px">{{ reviewTitle }}</h1>
+        <p style="margin:0;color:#5B6963;font-size:14.5px">{{ reviewSub }}</p>
+      </div>
+      <sc-if value="{{ hasLow }}" hint-placeholder-val="{{ false }}">
+        <span style="background:#FDF0D5;color:#92610A;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700">{{ lowCount }} soal perlu diperiksa</span>
+      </sc-if>
+      <button onClick="{{ goUpload }}" style="background:none;border:1px solid #E3E7E2;border-radius:999px;padding:9px 18px;font-weight:600;font-size:13.5px;color:#5B6963;cursor:pointer" style-hover="border-color:#B8CFC9;color:#182420">{{ reviewBack }}</button>
+    </div>
+    <div style="{{ reviewGridStyle }}">
+      <sc-if value="{{ hasSource }}" hint-placeholder-val="{{ true }}">
+      <aside style="position:sticky;top:88px;display:flex;flex-direction:column;gap:12px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#8A968F">SUMBER UNGGAHAN</div>
+        <div style="background:#FFFFFF;border:2px solid #0E8A7B;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:6px">
+          <div style="height:7px;width:60%;background:#D8D2C2;border-radius:4px"></div>
+          <div style="height:5px;width:95%;background:#EAE6DA;border-radius:4px"></div>
+          <div style="height:5px;width:88%;background:#C4E7DD;border-radius:4px"></div>
+          <div style="height:5px;width:92%;background:#EAE6DA;border-radius:4px"></div>
+          <div style="height:5px;width:70%;background:#C4E7DD;border-radius:4px"></div>
+          <div style="height:5px;width:90%;background:#EAE6DA;border-radius:4px"></div>
+          <div style="height:5px;width:82%;background:#C4E7DD;border-radius:4px"></div>
+          <div style="font-size:12px;font-weight:600;color:#41544E;margin-top:6px">hal 1 · 5 soal</div>
+        </div>
+        <div style="background:#FFFFFF;border:1px solid #E3E7E2;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:6px">
+          <div style="height:5px;width:90%;background:#EAE6DA;border-radius:4px"></div>
+          <div style="height:5px;width:75%;background:#C4E7DD;border-radius:4px"></div>
+          <div style="height:5px;width:88%;background:#EAE6DA;border-radius:4px"></div>
+          <div style="height:5px;width:65%;background:#C4E7DD;border-radius:4px"></div>
+          <div style="height:5px;width:80%;background:#EAE6DA;border-radius:4px"></div>
+          <div style="font-size:12px;font-weight:600;color:#41544E;margin-top:6px">hal 2 · 3 soal</div>
+        </div>
+      </aside>
+      </sc-if>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <sc-for list="{{ qs }}" as="q" hint-placeholder-count="3">
+          <div style="{{ q.cardStyle }}">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="width:28px;height:28px;border-radius:9px;background:#DCF1EC;color:#0A6E62;display:grid;place-items:center;font-family:'Gabarito',sans-serif;font-weight:700;font-size:14px">{{ q.no }}</span>
+              <span style="background:#ECE8FC;color:#4A3DB8;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700">{{ q.badge }}</span>
+              <sc-if value="{{ q.showConf }}" hint-placeholder-val="{{ false }}">
+                <span style="{{ q.confStyle }}">{{ q.confLabel }}</span>
+              </sc-if>
+              <span style="flex:1"></span>
+              <button onClick="{{ q.onEdit }}" style="background:none;border:1px solid #E3E7E2;border-radius:8px;padding:6px 14px;font-weight:600;font-size:12.5px;color:#41544E;cursor:pointer" style-hover="border-color:#0E8A7B;color:#0E8A7B">{{ q.editLabel }}</button>
+              <button onClick="{{ q.onDel }}" style="background:none;border:none;color:#9AA6A1;cursor:pointer;padding:6px;border-radius:8px;display:grid;place-items:center" style-hover="background:#FCE9E9;color:#D64545" title="Hapus soal">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg>
+              </button>
+            </div>
+            <sc-if value="{{ q.isEditing }}" hint-placeholder-val="{{ false }}">
+              <textarea value="{{ q.q }}" onChange="{{ q.onText }}" style="width:100%;min-height:64px;border:1.5px solid #0E8A7B;border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.5;resize:vertical;margin-top:12px;outline:none"></textarea>
+            </sc-if>
+            <sc-if value="{{ q.notEditing }}" hint-placeholder-val="{{ true }}">
+              <div style="font-size:16px;font-weight:600;line-height:1.5;margin-top:12px;text-wrap:pretty">{{ q.q }}</div>
+            </sc-if>
+            <sc-if value="{{ q.hasOpts }}" hint-placeholder-val="{{ true }}">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+                <sc-for list="{{ q.opts }}" as="o" hint-placeholder-count="4">
+                  <button onClick="{{ o.onPick }}" style="{{ o.style }}" title="Klik untuk jadikan kunci jawaban">{{ o.mark }}{{ o.label }}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ q.isIsian }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+                <span style="font-size:13px;font-weight:600;color:#5B6963">Kunci jawaban:</span>
+                <input value="{{ q.key }}" onChange="{{ q.onKey }}" style="background:#DCF1EC;border:1.5px solid transparent;border-radius:9px;padding:7px 12px;font-weight:700;font-size:14px;color:#0A6E62;width:160px;outline:none">
+              </div>
+            </sc-if>
+            <sc-if value="{{ q.low }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:12px;background:#FDF0D5;border-radius:10px;padding:9px 14px;font-size:13px;font-weight:600;color:#92610A">Foto agak buram di nomor ini — pastikan kunci jawabannya sudah benar.</div>
+            </sc-if>
+          </div>
+        </sc-for>
+        <div style="position:sticky;bottom:16px;background:#FFFFFF;border:1px solid #E3E7E2;border-radius:16px;box-shadow:0 12px 32px rgba(24,36,32,.12);padding:14px 18px;display:flex;align-items:center;gap:12px;margin-top:8px">
+          <button onClick="{{ addQ }}" style="background:none;border:1.5px dashed #B8CFC9;border-radius:999px;padding:11px 20px;font-weight:600;font-size:14px;color:#41544E;cursor:pointer" style-hover="border-color:#0E8A7B;color:#0E8A7B">+ Tambah soal manual</button>
+          <span style="flex:1"></span>
+          <button onClick="{{ goTemplate }}" style="display:flex;align-items:center;gap:10px;background:#0E8A7B;color:#FFFFFF;border:none;border-radius:999px;padding:13px 26px;font-family:'Gabarito',sans-serif;font-weight:700;font-size:15px;cursor:pointer" style-hover="background:#0A6E62">
+            Lanjut: Pilih Template ({{ qCount }} soal)
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isTemplate }}" hint-placeholder-val="{{ false }}">
+  <div style="max-width:1160px;margin:0 auto;padding:36px 24px 80px;display:flex;flex-direction:column;gap:24px">
+    <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap">
+      <div style="flex:1;min-width:300px">
+        <h1 style="margin:0 0 6px;font-family:'Gabarito',sans-serif;font-weight:800;font-size:30px">Pilih template latihan</h1>
+        <p style="margin:0;color:#5B6963;font-size:14.5px;text-wrap:pretty">Set soal yang sama bisa dipindah ke template mana pun, kapan saja — tanpa mengetik ulang.</p>
+      </div>
+      <button onClick="{{ goReview }}" style="background:none;border:1px solid #E3E7E2;border-radius:999px;padding:9px 18px;font-weight:600;font-size:13.5px;color:#5B6963;cursor:pointer" style-hover="border-color:#B8CFC9;color:#182420">Kembali ke review</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px">
+      <button onClick="{{ pkKuis }}" style="background:#FFFFFF;border:1px solid #E3E7E2;border-radius:20px;padding:0;overflow:hidden;text-align:left;cursor:pointer;display:flex;flex-direction:column" style-hover="transform:translateY(-3px);border-color:#0E8A7B;box-shadow:0 12px 28px rgba(24,36,32,.1)">
+        <div style="height:112px;background:#DCF1EC;display:grid;place-items:center">
+          <div style="width:120px;background:#FFFFFF;border-radius:10px;padding:9px;display:flex;flex-direction:column;gap:6px;box-shadow:0 4px 12px rgba(24,36,32,.08)">
+            <div style="height:7px;width:75%;background:#182420;border-radius:4px;opacity:.8"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+              <div style="height:15px;border-radius:5px;border:1.5px solid #E3E7E2"></div>
+              <div style="height:15px;border-radius:5px;background:#0E8A7B"></div>
+              <div style="height:15px;border-radius:5px;border:1.5px solid #E3E7E2"></div>
+              <div style="height:15px;border-radius:5px;border:1.5px solid #E3E7E2"></div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Gabarito',sans-serif;font-weight:700;font-size:17px">Kuis</span><span style="background:#0E8A7B;color:#FFFFFF;border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:700">DISARANKAN</span></div>
+          <div style="font-size:13px;color:#5B6963">Pilihan ganda klasik, cocok untuk campuran soalmu</div>
+        </div>
+      </button>
+      <button onClick="{{ pkBS }}" style="background:#FFFFFF;border:1px solid #E3E7E2;border-radius:20px;padding:0;overflow:hidden;text-align:left;cursor:pointer;display:flex;flex-direction:column" style-hover="transform:translateY(-3px);border-color:#0E8A7B;box-shadow:0 12px 28px rgba(24,36,32,.1)">
+        <div style="height:112px;background:#ECE8FC;display:flex;align-items:center;justify-content:center;gap:10px">
+          <div style="width:48px;height:44px;border-radius:12px;background:#0E8A7B;display:grid;place-items:center;color:#FFFFFF;font-family:'Gabarito',sans-serif;font-weight:800;font-size:20px;transform:rotate(-4deg);box-shadow:0 6px 14px rgba(14,138,123,.35)">B</div>
+          <div style="width:48px;height:44px;border-radius:12px;background:#D64545;display:grid;place-items:center;color:#FFFFFF;font-family:'Gabarito',sans-serif;font-weight:800;font-size:20px;transform:rotate(4deg);box-shadow:0 6px 14px rgba(214,69,69,.35)">S</div>
+        </div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:4px">
+          <div style="font-family:'Gabarito',sans-serif;font-weight:700;font-size:17px">Benar / Salah</div>
+          <div style="font-size:13px;color:#5B6963">Tebak cepat dua pilihan</div>
+        </div>
+      </button>
+      <button onClick="{{ pkIsian }}" style="background:#FFFFFF;border:1px solid #E3E7E2;border-radius:20px;padding:0;overflow:hidden;text-align:left;cursor:pointer;display:flex;flex-direction:column" style-hover="transform:translateY(-3px);border-color:#0E8A7B;box-shadow:0 12px 28px rgba(24,36,32,.1)">
+        <div style="height:112px;background:#FBEED3;display:grid;place-items:center">
+          <div style="width:130px;background:#FFFFFF;border-radius:10px;padding:12px 10px;display:flex;align-items:center;gap:5px;box-shadow:0 4px 12px rgba(24,36,32,.08)">
+            <div style="height:7px;width:34px;background:#8A968F;border-radius:4px"></div>
+            <div style="height:20px;width:44px;border:1.5px dashed #0E8A7B;border-radius:6px;background:#F0FAF7"></div>
+            <div style="height:7px;width:26px;background:#8A968F;border-radius:4px"></div>
+          </div>
+        </div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:4px">
+          <div style="font-family:'Gabarito',sans-serif;font-weight:700;font-size:17px">Isian</div>
+          <div style="font-size:13px;color:#5B6963">Lengkapi jawaban dengan mengetik</div>
+        </div>
+      </button>
+      <button onClick="{{ pkJodoh }}" style="background:#FFFFFF;border:1px solid #E3E7E2;border-radius:20px;padding:0;overflow:hidden;text-align:left;cursor:pointer;display:flex;flex-direction:column" style-hover="transform:translateY(-3px);border-color:#0E8A7B;box-shadow:0 12px 28px rgba(24,36,32,.1)">
+        <div style="height:112px;background:#DCF1EC;display:flex;align-items:center;justify-content:center;gap:22px">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="width:44px;height:14px;border-radius:7px;background:#0E8A7B"></div>
+            <div style="width:44px;height:14px;border-radius:7px;background:#6D5AE6"></div>
+            <div style="width:44px;height:14px;border-radius:7px;background:#E8A33D"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="width:44px;height:14px;border-radius:7px;background:#6D5AE6;opacity:.45"></div>
+            <div style="width:44px;height:14px;border-radius:7px;background:#E8A33D;opacity:.45"></div>
+            <div style="width:44px;height:14px;border-radius:7px;background:#0E8A7B;opacity:.45"></div>
+          </div>
+        </div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:4px">
+          <div style="font-family:'Gabarito',sans-serif;font-weight:700;font-size:17px">Menjodohkan</div>
+          <div style="font-size:13px;color:#5B6963">Pasangkan soal dengan jawabannya</div>
+        </div>
+      </button>
+      <button onClick="{{ pkFlash }}" style="background:#FFFFFF;border:1px solid #E3E7E2;border-radius:20px;padding:0;overflow:hidden;text-align:left;cursor:pointer;display:flex;flex-direction:column" style-hover="transform:translateY(-3px);border-color:#0E8A7B;box-shadow:0 12px 28px rgba(24,36,32,.1)">
+        <div style="height:112px;background:#ECE8FC;display:grid;place-items:center">
+          <div style="position:relative;width:90px;height:64px">
+            <div style="position:absolute;inset:0;background:#C9BFF5;border-radius:10px;transform:rotate(-7deg)"></div>
+            <div style="position:absolute;inset:0;background:#A99AF0;border-radius:10px;transform:rotate(-2deg)"></div>
+            <div style="position:absolute;inset:0;background:#FFFFFF;border-radius:10px;transform:rotate(3deg);box-shadow:0 6px 14px rgba(24,36,32,.15);display:grid;place-items:center">
+              <div style="height:7px;width:50px;background:#6D5AE6;border-radius:4px"></div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:4px">
+          <div style="font-family:'Gabarito',sans-serif;font-weight:700;font-size:17px">Flashcard</div>
+          <div style="font-size:13px;color:#5B6963">Kartu bolak-balik untuk menghafal</div>
+        </div>
+      </button>
+      <button onClick="{{ pkSusun }}" style="background:#FFFFFF;border:1px solid #E3E7E2;border-radius:20px;padding:0;overflow:hidden;text-align:left;cursor:pointer;display:flex;flex-direction:column" style-hover="transform:translateY(-3px);border-color:#0E8A7B;box-shadow:0 12px 28px rgba(24,36,32,.1)">
+        <div style="height:112px;background:#FBEED3;display:flex;align-items:center;justify-content:center;gap:6px">
+          <div style="width:30px;height:30px;border-radius:8px;background:#FFFFFF;box-shadow:0 4px 10px rgba(24,36,32,.12);display:grid;place-items:center;font-family:'Gabarito',sans-serif;font-weight:800;color:#B4831E;transform:rotate(-5deg)">T</div>
+          <div style="width:30px;height:30px;border-radius:8px;background:#FFFFFF;box-shadow:0 4px 10px rgba(24,36,32,.12);display:grid;place-items:center;font-family:'Gabarito',sans-serif;font-weight:800;color:#B4831E;transform:rotate(3deg)">A</div>
+          <div style="width:30px;height:30px;border-radius:8px;background:#E8A33D;box-shadow:0 4px 10px rgba(24,36,32,.12);display:grid;place-items:center;font-family:'Gabarito',sans-serif;font-weight:800;color:#FFFFFF;transform:rotate(-2deg)">K</div>
+          <div style="width:30px;height:30px;border-radius:8px;background:#FFFFFF;box-shadow:0 4px 10px rgba(24,36,32,.12);display:grid;place-items:center;font-family:'Gabarito',sans-serif;font-weight:800;color:#B4831E;transform:rotate(6deg)">A</div>
+        </div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:4px">
+          <div style="font-family:'Gabarito',sans-serif;font-weight:700;font-size:17px">Susun Kata</div>
+          <div style="font-size:13px;color:#5B6963">Urutkan huruf atau kata acak</div>
+        </div>
+      </button>
+      <button onClick="{{ pkCari }}" style="background:#FFFFFF;border:1px solid #E3E7E2;border-radius:20px;padding:0;overflow:hidden;text-align:left;cursor:pointer;display:flex;flex-direction:column" style-hover="transform:translateY(-3px);border-color:#0E8A7B;box-shadow:0 12px 28px rgba(24,36,32,.1)">
+        <div style="height:112px;background:#DCF1EC;display:grid;place-items:center">
+          <div style="background:#FFFFFF;border-radius:10px;padding:8px;display:grid;grid-template-columns:repeat(4,18px);gap:3px;box-shadow:0 4px 12px rgba(24,36,32,.08);font-size:10px;font-weight:700;color:#41544E;text-align:center">
+            <span style="line-height:18px">K</span><span style="line-height:18px;background:#0E8A7B;color:#FFFFFF;border-radius:4px">D</span><span style="line-height:18px">R</span><span style="line-height:18px">M</span>
+            <span style="line-height:18px">P</span><span style="line-height:18px">A</span><span style="line-height:18px;background:#0E8A7B;color:#FFFFFF;border-radius:4px">A</span><span style="line-height:18px">E</span>
+            <span style="line-height:18px">S</span><span style="line-height:18px">L</span><span style="line-height:18px">G</span><span style="line-height:18px;background:#0E8A7B;color:#FFFFFF;border-radius:4px">U</span>
+            <span style="line-height:18px">B</span><span style="line-height:18px">O</span><span style="line-height:18px">T</span><span style="line-height:18px">I</span>
+          </div>
+        </div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:4px">
+          <div style="font-family:'Gabarito',sans-serif;font-weight:700;font-size:17px">Cari Kata</div>
+          <div style="font-size:13px;color:#5B6963">Temukan jawaban di kisi huruf</div>
+        </div>
+      </button>
+      <button onClick="{{ pkCepat }}" style="background:#FFFFFF;border:1px solid #E3E7E2;border-radius:20px;padding:0;overflow:hidden;text-align:left;cursor:pointer;display:flex;flex-direction:column" style-hover="transform:translateY(-3px);border-color:#0E8A7B;box-shadow:0 12px 28px rgba(24,36,32,.1)">
+        <div style="height:112px;background:#ECE8FC;display:flex;align-items:center;justify-content:center;gap:12px">
+          <div style="width:46px;height:46px;border-radius:50%;border:4px solid #6D5AE6;position:relative;background:#FFFFFF">
+            <div style="position:absolute;left:50%;top:50%;width:3px;height:14px;background:#6D5AE6;border-radius:2px;transform:translate(-50%,-100%) rotate(40deg);transform-origin:bottom center"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="width:52px;height:9px;border-radius:5px;background:#6D5AE6"></div>
+            <div style="width:38px;height:9px;border-radius:5px;background:#A99AF0"></div>
+            <div style="width:24px;height:9px;border-radius:5px;background:#C9BFF5"></div>
+          </div>
+        </div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:4px">
+          <div style="font-family:'Gabarito',sans-serif;font-weight:700;font-size:17px">Kuis Cepat</div>
+          <div style="font-size:13px;color:#5B6963">Balapan menjawab sebelum waktu habis</div>
+        </div>
+      </button>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isPublish }}" hint-placeholder-val="{{ false }}">
+  <div style="max-width:1020px;margin:0 auto;padding:44px 24px 80px;display:grid;grid-template-columns:1.25fr .75fr;gap:28px;align-items:start">
+    <div style="background:#FFFFFF;border:1px solid #E3E7E2;border-radius:26px;padding:36px;display:flex;flex-direction:column;gap:20px;animation:popin .3s ease">
+      <div style="display:flex;align-items:center;gap:16px">
+        <span style="width:54px;height:54px;border-radius:50%;background:#DCF1EC;display:grid;place-items:center;color:#0E8A7B;flex-shrink:0">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+        </span>
+        <div>
+          <h1 style="margin:0;font-family:'Gabarito',sans-serif;font-weight:800;font-size:26px">Aktivitas siap dibagikan!</h1>
+          <div style="font-size:14px;color:#5B6963;margin-top:2px">Template: <strong style="color:#0A6E62">{{ tplLabel }}</strong> · {{ qCount }} soal · siswa main tanpa login</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#8A968F">JUDUL AKTIVITAS</label>
+        <input value="{{ title }}" onChange="{{ onTitle }}" style="border:1.5px solid #E3E7E2;border-radius:12px;padding:12px 16px;font-family:'Gabarito',sans-serif;font-weight:700;font-size:19px;color:#182420;outline:none;width:100%" style-focus="border-color:#0E8A7B">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#8A968F">TAUTAN SISWA</label>
+        <div style="display:flex;gap:10px">
+          <div style="flex:1;background:#F2F4F1;border-radius:12px;padding:13px 16px;font-weight:600;font-size:15px;color:#0A6E62;letter-spacing:.01em">soalsnap.id/m/X7K2E9</div>
+          <button onClick="{{ copyLink }}" style="background:#0E8A7B;color:#FFFFFF;border:none;border-radius:12px;padding:0 22px;font-weight:700;font-size:14px;cursor:pointer;min-width:110px" style-hover="background:#0A6E62">{{ copyLabel }}</button>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;border-top:1px solid #EEF1EE;padding-top:20px">
+        <div style="display:flex;align-items:center;gap:14px">
+          <button onClick="{{ toggleAcak }}" style="{{ acakTrack }}"><span style="{{ acakKnob }}"></span></button>
+          <div>
+            <div style="font-weight:600;font-size:14.5px">Acak urutan soal</div>
+            <div style="font-size:12.5px;color:#8A968F">Tiap siswa mendapat urutan berbeda</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <button onClick="{{ toggleTimer }}" style="{{ timerTrack }}"><span style="{{ timerKnob }}"></span></button>
+          <div>
+            <div style="font-weight:600;font-size:14.5px">Timer per soal ({{ timerDetik }} detik)</div>
+            <div style="font-size:12.5px;color:#8A968F">Waktu habis dihitung salah</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;border-top:1px solid #EEF1EE;padding-top:20px">
+        <button onClick="{{ startPlay }}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:10px;background:#6D5AE6;color:#FFFFFF;border:none;border-radius:14px;padding:15px 0;font-family:'Gabarito',sans-serif;font-weight:700;font-size:16px;cursor:pointer" style-hover="background:#5B48D4;transform:translateY(-2px)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l14 8-14 8z"></path></svg>
+          Coba Mainkan — Pratinjau Siswa
+        </button>
+        <button onClick="{{ goDash }}" style="background:none;border:1.5px solid #E3E7E2;border-radius:14px;padding:0 22px;font-weight:600;font-size:14px;color:#41544E;cursor:pointer" style-hover="border-color:#B8CFC9">Ke Dashboard</button>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px;position:sticky;top:88px">
+      <div style="background:#0E3F39;border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:12px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#7FC8BA">TAMPILAN SISWA</div>
+        <div style="background:#FFFFFF;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="background:#ECE8FC;color:#6D5AE6;border-radius:999px;padding:3px 10px;font-size:10px;font-weight:700">SOAL 1/8</span>
+            <span style="font-size:10px;font-weight:700;color:#8A968F">SKOR 0</span>
+          </div>
+          <div style="height:5px;background:#E7EDEA;border-radius:999px"><div style="height:100%;width:70%;background:#7FD9C8;border-radius:999px"></div></div>
+          <div style="font-family:'Gabarito',sans-serif;font-weight:700;font-size:13px;line-height:1.4">Proses fotosintesis terutama berlangsung di bagian…</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <div style="height:24px;border-radius:7px;border:1.5px solid #E3E7E2"></div>
+            <div style="height:24px;border-radius:7px;background:#DCF1EC;border:1.5px solid #0E8A7B"></div>
+            <div style="height:24px;border-radius:7px;border:1.5px solid #E3E7E2"></div>
+            <div style="height:24px;border-radius:7px;border:1.5px solid #E3E7E2"></div>
+          </div>
+        </div>
+      </div>
+      <div style="background:#FFFFFF;border:1px solid #E3E7E2;border-radius:20px;padding:20px;display:flex;align-items:center;gap:16px">
+        <div style="width:76px;height:76px;background:#FFFFFF;border:1.5px solid #182420;border-radius:8px;position:relative;flex-shrink:0">
+          <div style="position:absolute;top:7px;left:7px;width:18px;height:18px;border:3.5px solid #182420"><div style="position:absolute;inset:3px;background:#182420"></div></div>
+          <div style="position:absolute;top:7px;right:7px;width:18px;height:18px;border:3.5px solid #182420"><div style="position:absolute;inset:3px;background:#182420"></div></div>
+          <div style="position:absolute;bottom:7px;left:7px;width:18px;height:18px;border:3.5px solid #182420"><div style="position:absolute;inset:3px;background:#182420"></div></div>
+          <div style="position:absolute;bottom:9px;right:9px;width:8px;height:8px;background:#182420"></div>
+          <div style="position:absolute;top:32px;right:12px;width:6px;height:6px;background:#182420"></div>
+          <div style="position:absolute;top:36px;left:32px;width:6px;height:6px;background:#182420"></div>
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:14.5px">Pindai untuk main</div>
+          <div style="font-size:12.5px;color:#8A968F;margin-top:2px">Tampilkan QR ini di proyektor kelas</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isMain }}" hint-placeholder-val="{{ false }}">
+  <div style="min-height:calc(100vh - 64px);background:radial-gradient(800px 500px at 85% -10%, rgba(109,90,230,.4), transparent 60%), #0E3F39;padding:28px 24px 64px">
+    <div style="max-width:780px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button onClick="{{ exitPlay }}" style="display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.12);border:none;border-radius:999px;padding:9px 16px;font-weight:600;font-size:13px;color:#FFFFFF;cursor:pointer" style-hover="background:rgba(255,255,255,.22)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+          Keluar
+        </button>
+        <span style="flex:1"></span>
+        <span style="background:rgba(255,255,255,.12);border-radius:999px;padding:9px 18px;font-family:'Gabarito',sans-serif;font-weight:700;font-size:14px;color:#FFFFFF">{{ pCounter }}</span>
+        <span style="background:#F6C445;border-radius:999px;padding:9px 18px;font-family:'Gabarito',sans-serif;font-weight:700;font-size:14px;color:#182420">{{ pScoreChip }}</span>
+      </div>
+      <sc-if value="{{ pPlaying }}" hint-placeholder-val="{{ true }}">
+        <sc-if value="{{ pTimerShow }}" hint-placeholder-val="{{ true }}">
+          <div style="height:10px;background:rgba(255,255,255,.16);border-radius:999px;overflow:hidden">
+            <div style="{{ tStyle }}"></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ pModeKuis }}" hint-placeholder-val="{{ true }}">
+        <div style="background:#FFFFFF;border-radius:24px;padding:36px;display:flex;flex-direction:column;gap:20px;animation:popin .3s ease">
+          <span style="align-self:flex-start;background:#ECE8FC;color:#4A3DB8;border-radius:999px;padding:5px 14px;font-size:12px;font-weight:700">{{ pBadge }}</span>
+          <div style="font-family:'Gabarito',sans-serif;font-weight:700;font-size:26px;line-height:1.35;text-wrap:pretty">{{ pQ }}</div>
+          <sc-if value="{{ pHasOpts }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <sc-for list="{{ pOpts }}" as="o" hint-placeholder-count="4">
+                <button onClick="{{ o.onPick }}" style="{{ o.style }}" style-hover="border-color:#0E8A7B;transform:translateY(-2px)">{{ o.label }}</button>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ pIsIsian }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:10px">
+              <input value="{{ pInput }}" onChange="{{ onPInput }}" placeholder="Ketik jawabanmu di sini…" style="flex:1;border:2px solid #E3E7E2;border-radius:14px;padding:15px 18px;font-size:17px;font-weight:600;outline:none" style-focus="border-color:#0E8A7B">
+              <button onClick="{{ submitIsian }}" style="background:#0E8A7B;color:#FFFFFF;border:none;border-radius:14px;padding:0 28px;font-family:'Gabarito',sans-serif;font-weight:700;font-size:16px;cursor:pointer" style-hover="background:#0A6E62">Jawab</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ pHasFb }}" hint-placeholder-val="{{ false }}">
+            <div style="{{ pFbStyle }}">{{ pFb }}</div>
+          </sc-if>
+        </div>
+        </sc-if>
+        <sc-if value="{{ pModeJodoh }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFFFFF;border-radius:24px;padding:32px;display:flex;flex-direction:column;gap:18px;animation:popin .3s ease">
+          <div style="font-size:14px;font-weight:600;color:#5B6963;text-align:center">Klik istilah di kiri, lalu klik jawabannya di kanan.</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px">
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ jLeft }}" as="o" hint-placeholder-count="5">
+                <button onClick="{{ o.onPick }}" style="{{ o.style }}">{{ o.label }}</button>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ jRight }}" as="o" hint-placeholder-count="5">
+                <button onClick="{{ o.onPick }}" style="{{ o.style }}">{{ o.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+        <sc-if value="{{ pModeFlash }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px;animation:popin .3s ease">
+          <button onClick="{{ fFlip }}" style="{{ fCardStyle }}">
+            <span style="{{ fTagStyle }}">{{ fTag }}</span>
+            <span style="font-family:'Gabarito',sans-serif;font-weight:700;font-size:26px;line-height:1.4;text-wrap:pretty">{{ fText }}</span>
+            <span style="font-size:12.5px;font-weight:600;opacity:.6">klik kartu untuk membalik</span>
+          </button>
+          <div style="display:flex;justify-content:center;gap:7px">
+            <sc-for list="{{ fDots }}" as="d" hint-placeholder-count="8">
+              <span style="{{ d.style }}"></span>
+            </sc-for>
+          </div>
+          <div style="display:flex;justify-content:center;gap:12px">
+            <button onClick="{{ fPrev }}" style="background:rgba(255,255,255,.12);border:none;border-radius:999px;padding:13px 22px;font-weight:600;font-size:14px;color:#FFFFFF;cursor:pointer" style-hover="background:rgba(255,255,255,.22)">← Sebelumnya</button>
+            <button onClick="{{ fNext }}" style="background:#F6C445;border:none;border-radius:999px;padding:13px 26px;font-family:'Gabarito',sans-serif;font-weight:700;font-size:15px;color:#182420;cursor:pointer" style-hover="transform:translateY(-2px)">{{ fNextLabel }}</button>
+          </div>
+        </div>
+        </sc-if>
+        <sc-if value="{{ pModeSusun }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFFFFF;border-radius:24px;padding:36px 32px;display:flex;flex-direction:column;gap:20px;align-items:center;animation:popin .3s ease">
+          <span style="background:#ECE8FC;color:#4A3DB8;border-radius:999px;padding:5px 14px;font-size:12px;font-weight:700">PETUNJUK</span>
+          <div style="font-family:'Gabarito',sans-serif;font-weight:700;font-size:22px;text-align:center;line-height:1.4;text-wrap:pretty">{{ sClue }}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+            <sc-for list="{{ sSlots }}" as="sl" hint-placeholder-count="7">
+              <span style="{{ sl.style }}">{{ sl.ch }}</span>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+            <sc-for list="{{ sTiles }}" as="t" hint-placeholder-count="7">
+              <button onClick="{{ t.onPick }}" style="{{ t.style }}">{{ t.ch }}</button>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button onClick="{{ sBack }}" style="background:none;border:1.5px solid #E3E7E2;border-radius:999px;padding:10px 20px;font-weight:600;font-size:13.5px;color:#41544E;cursor:pointer" style-hover="border-color:#B8CFC9">Hapus huruf</button>
+            <button onClick="{{ sReset }}" style="background:none;border:1.5px solid #E3E7E2;border-radius:999px;padding:10px 20px;font-weight:600;font-size:13.5px;color:#41544E;cursor:pointer" style-hover="border-color:#B8CFC9">Ulangi</button>
+          </div>
+          <sc-if value="{{ sOkShow }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#DCF1EC;color:#0A6E62;border-radius:999px;padding:10px 22px;font-weight:700;font-size:15px;animation:popin .25s ease">Benar!</div>
+          </sc-if>
+        </div>
+        </sc-if>
+        <sc-if value="{{ pModeCari }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFFFFF;border-radius:24px;padding:32px;display:flex;flex-direction:column;gap:18px;align-items:center;animation:popin .3s ease">
+          <div style="font-size:14px;font-weight:600;color:#5B6963;text-align:center">Klik huruf pertama, lalu huruf terakhir kata yang kamu temukan.</div>
+          <div style="display:grid;grid-template-columns:repeat(10,1fr);gap:4px;width:100%;max-width:440px">
+            <sc-for list="{{ cCells }}" as="x" hint-placeholder-count="20">
+              <button onClick="{{ x.onPick }}" style="{{ x.style }}">{{ x.ch }}</button>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+            <sc-for list="{{ cWords }}" as="w" hint-placeholder-count="4">
+              <span style="{{ w.style }}">{{ w.w }}</span>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+      </sc-if>
+      <sc-if value="{{ pDone }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFFFFF;border-radius:28px;padding:52px 40px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;animation:popin .35s ease">
+          <div style="font-family:'Gabarito',sans-serif;font-weight:800;font-size:34px">Selesai!</div>
+          <div style="font-family:'Gabarito',sans-serif;font-weight:900;font-size:52px;color:#0E8A7B">{{ pFinal }}</div>
+          <div style="font-size:16px;color:#5B6963">{{ pMsg }}</div>
+          <div style="display:flex;gap:12px;margin-top:18px">
+            <button onClick="{{ playAgain }}" style="background:#0E8A7B;color:#FFFFFF;border:none;border-radius:999px;padding:14px 28px;font-family:'Gabarito',sans-serif;font-weight:700;font-size:15px;cursor:pointer" style-hover="background:#0A6E62">Main Lagi</button>
+            <button onClick="{{ exitPlay }}" style="background:none;border:1.5px solid #E3E7E2;border-radius:999px;padding:14px 24px;font-weight:600;font-size:14px;color:#41544E;cursor:pointer" style-hover="border-color:#B8CFC9">Kembali</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</sc-if>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;tampilkanConfidence&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Review AI&quot;}, &quot;kecepatanAI&quot;: {&quot;editor&quot;: &quot;range&quot;, &quot;default&quot;: 1, &quot;min&quot;: 0.5, &quot;max&quot;: 3, &quot;step&quot;: 0.5, &quot;unit&quot;: &quot;\u00d7&quot;, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;Simulasi&quot;}, &quot;timerDetik&quot;: {&quot;editor&quot;: &quot;int&quot;, &quot;default&quot;: 20, &quot;min&quot;: 5, &quot;max&quot;: 60, &quot;unit&quot;: &quot;dtk&quot;, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;Mode Siswa&quot;}}">
+class Component extends DCLogic {
+  state = { screen: 'dash', files: [], progress: 0, qs: null, editingId: null, manual: false, tpl: null, title: 'Latihan IPA: Fotosintesis', copied: false, acak: false, timerOn: true, published: false, ret: 'publish', pq: [], pIdx: 0, pScore: 0, pPicked: null, pResult: null, tleft: 20, pInput: '', pDone: false, mode: 'kuis', jPairs: [], jOrder: [], jSel: null, jMatched: [], jTried: [], jWrong: null, jScore: 0, fCards: [], fIdx: 0, fBack: false, fSeen: [0], sWords: [], sIdx: 0, sBuilt: [], sOk: false, sBad: false, sSolved: 0, cGrid: null, cSel: null, cFound: [], cFoundCells: [], cBad: [] };
+
+  initQs() { return [
+    { id: 1, type: 'pg', q: 'Proses fotosintesis pada tumbuhan terutama berlangsung di bagian …', opts: ['Akar', 'Daun', 'Batang', 'Bunga'], correct: 1, conf: 98 },
+    { id: 2, type: 'pg', q: 'Zat hijau daun yang berperan menangkap energi cahaya matahari disebut …', opts: ['Klorofil', 'Karoten', 'Xantofil', 'Antosianin'], correct: 0, conf: 97 },
+    { id: 3, type: 'pg', q: 'Gas yang diperlukan tumbuhan dalam proses fotosintesis adalah …', opts: ['Oksigen', 'Karbon dioksida', 'Nitrogen', 'Hidrogen'], correct: 1, conf: 96 },
+    { id: 4, type: 'pg', q: 'Hasil fotosintesis yang menjadi sumber energi utama bagi tumbuhan adalah …', opts: ['Glukosa', 'Protein', 'Lemak', 'Vitamin'], correct: 0, conf: 95 },
+    { id: 5, type: 'pg', q: 'Percobaan Ingenhousz membuktikan bahwa fotosintesis menghasilkan …', opts: ['Karbon dioksida', 'Uap air', 'Oksigen', 'Amilum'], correct: 2, conf: 74, low: true },
+    { id: 6, type: 'bs', q: 'Fotosintesis hanya dapat terjadi pada siang hari.', opts: ['Benar', 'Salah'], correct: 1, conf: 91 },
+    { id: 7, type: 'bs', q: 'Stomata merupakan tempat pertukaran gas pada daun.', opts: ['Benar', 'Salah'], correct: 0, conf: 93 },
+    { id: 8, type: 'isian', q: 'Selain glukosa, fotosintesis juga menghasilkan gas ____ yang dilepaskan ke udara.', key: 'oksigen', conf: 88 }
+  ]; }
+
+  getQs() { return this.state.qs || this.initQs(); }
+  timerMax() { const b = this.props.timerDetik ?? 20; return (this.state.mode === 'cepat' || this.state.tpl === 'Kuis Cepat') ? Math.min(8, b) : b; }
+  componentWillUnmount() { clearInterval(this.pt); clearInterval(this.tt); }
+
+  startProses = () => {
+    clearInterval(this.pt);
+    this.prog = 0;
+    this.setState({ screen: 'proses', progress: 0 });
+    const speed = this.props.kecepatanAI ?? 1;
+    this.pt = setInterval(() => {
+      this.prog = Math.min(100, this.prog + (1.5 + Math.random() * 3.5) * speed);
+      this.setState({ progress: this.prog });
+      if (this.prog >= 100) {
+        clearInterval(this.pt);
+        setTimeout(() => this.setState({ screen: 'review', manual: false, qs: this.initQs(), editingId: null }), 500);
+      }
+    }, 90);
+  };
+
+  pickTpl = (t) => this.setState({ tpl: t, screen: 'publish', published: true });
+
+  startTimer() {
+    clearInterval(this.tt);
+    if (!this.state.timerOn || !(this.state.mode === 'kuis' || this.state.mode === 'cepat')) return;
+    this.tt = setInterval(() => {
+      const s = this.state;
+      if (s.pResult) return;
+      if (s.tleft <= 1) { clearInterval(this.tt); this.setState({ tleft: 0, pResult: 'habis' }); setTimeout(this.nextQ, 1400); return; }
+      this.setState({ tleft: s.tleft - 1 });
+    }, 1000);
+  }
+
+  shuf(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+  beginPlay(ret, forceKuis, filter) {
+    clearInterval(this.tt);
+    const S = this.state, qs = this.getQs();
+    const modeMap = { 'Menjodohkan': 'jodoh', 'Flashcard': 'flash', 'Susun Kata': 'susun', 'Kuis Cepat': 'cepat', 'Cari Kata': 'cari' };
+    const mode = forceKuis === true ? 'kuis' : (typeof forceKuis === 'string' ? forceKuis : (modeMap[S.tpl] || 'kuis'));
+    const shortQ = { 1: 'Tempat utama fotosintesis', 2: 'Zat hijau penangkap cahaya', 3: 'Gas yang diperlukan fotosintesis', 4: 'Hasil fotosintesis sumber energi', 5: 'Hasil percobaan Ingenhousz', 7: 'Tempat pertukaran gas di daun', 8: 'Gas yang dilepaskan ke udara' };
+    const ansOf = q => q.type === 'isian' ? (q.key || '') : ((q.opts || [])[q.correct] || '');
+    let pairs = [], seen = {};
+    qs.forEach(q => { const r = ansOf(q); if (q.type === 'bs' || !r || seen[r.toLowerCase()]) return; seen[r.toLowerCase()] = 1; pairs.push({ id: q.id, l: shortQ[q.id] || (q.q.length > 48 ? q.q.slice(0, 48) + '…' : q.q), r }); });
+    pairs = pairs.slice(0, 6);
+    let words = qs.filter(q => q.type !== 'bs').map(q => ({ w: ansOf(q).toUpperCase(), clue: shortQ[q.id] || q.q })).filter(x => /^[A-Z]+$/.test(x.w) && x.w.length >= 4 && x.w.length <= 10).slice(0, 4).map(x => ({ ...x, tiles: this.shuf(x.w.split('')) }));
+    if (!words.length) words = [{ w: 'OKSIGEN', clue: 'Gas hasil fotosintesis', tiles: this.shuf('OKSIGEN'.split('')) }];
+    const fCards = qs.map(q => ({ front: q.q.split('____').join('…'), back: ansOf(q) || '—' }));
+    let pq = filter ? qs.filter(q => q.type === filter) : qs.slice();
+    if (!pq.length) pq = qs.slice();
+    if (S.acak) pq = this.shuf(pq);
+    const tb = this.props.timerDetik ?? 20, tmax = (mode === 'cepat' || S.tpl === 'Kuis Cepat') ? Math.min(8, tb) : tb;
+    this.setState({ screen: 'main', ret, mode, pFilter: filter || null, pq, jPairs: pairs, jOrder: this.shuf(pairs.map(p => p.id)), jSel: null, jMatched: [], jTried: [], jWrong: null, jScore: 0, fCards, fIdx: 0, fBack: false, fSeen: [0], sWords: words, sIdx: 0, sBuilt: [], sOk: false, sBad: false, sSolved: 0, cGrid: this.genCari(words.map(x => x.w)), cSel: null, cFound: [], cFoundCells: [], cBad: [], pIdx: 0, pScore: 0, pPicked: null, pResult: null, pInput: '', tleft: tmax, pDone: false }, () => { if (mode === 'kuis' || mode === 'cepat') this.startTimer(); });
+  }
+
+  jPickL(id) { if (this.state.jMatched.includes(id)) return; this.setState({ jSel: this.state.jSel === id ? null : id }); }
+
+  jPickR(id) {
+    const S = this.state;
+    if (!S.jSel || S.jMatched.includes(id) || S.jWrong) return;
+    if (S.jSel === id) {
+      const first = !S.jTried.includes(id), m = [...S.jMatched, id];
+      this.setState({ jMatched: m, jSel: null, jScore: S.jScore + (first ? 1 : 0) });
+      if (m.length === S.jPairs.length) setTimeout(() => this.setState({ pDone: true }), 700);
+    } else {
+      this.setState({ jWrong: id, jTried: S.jTried.includes(S.jSel) ? S.jTried : [...S.jTried, S.jSel] });
+      setTimeout(() => this.setState({ jWrong: null }), 500);
+    }
+  }
+
+  sPick(i) {
+    const S = this.state, w = S.sWords[Math.min(S.sIdx, S.sWords.length - 1)];
+    if (!w || S.sOk || S.sBad || S.sBuilt.includes(i)) return;
+    const nb = [...S.sBuilt, i];
+    if (nb.length < w.w.length) { this.setState({ sBuilt: nb }); return; }
+    if (nb.map(x => w.tiles[x]).join('') === w.w) {
+      this.setState({ sBuilt: nb, sOk: true, sSolved: S.sSolved + 1 });
+      setTimeout(() => this.setState(s => s.sIdx >= s.sWords.length - 1 ? { pDone: true } : { sIdx: s.sIdx + 1, sBuilt: [], sOk: false }), 900);
+    } else {
+      this.setState({ sBuilt: nb, sBad: true });
+      setTimeout(() => this.setState({ sBuilt: [], sBad: false }), 650);
+    }
+  }
+
+  genCari(words) {
+    const N = 10, grid = Array.from({ length: N }, () => Array(N).fill(''));
+    const placed = [];
+    words.forEach(w => {
+      for (let t = 0; t < 250; t++) {
+        const h = Math.random() < .5, L = w.length;
+        if (L > N) return;
+        const r = Math.floor(Math.random() * (h ? N : N - L + 1)), c = Math.floor(Math.random() * (h ? N - L + 1 : N));
+        let ok = true;
+        for (let k = 0; k < L; k++) { const v = grid[h ? r : r + k][h ? c + k : c]; if (v && v !== w[k]) { ok = false; break; } }
+        if (!ok) continue;
+        const cells = [];
+        for (let k = 0; k < L; k++) { const rr = h ? r : r + k, cc = h ? c + k : c; grid[rr][cc] = w[k]; cells.push(rr * N + cc); }
+        placed.push({ w, cells });
+        break;
+      }
+    });
+    const AB = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (!grid[r][c]) grid[r][c] = AB[Math.floor(Math.random() * 26)];
+    return { N, letters: grid.flat(), placed };
+  }
+
+  cPick(i) {
+    const S = this.state, g = S.cGrid;
+    if (!g || S.cBad.length || S.cFoundCells.includes(i)) return;
+    if (S.cSel == null) { this.setState({ cSel: i }); return; }
+    if (S.cSel === i) { this.setState({ cSel: null }); return; }
+    const N = g.N, r1 = Math.floor(S.cSel / N), c1 = S.cSel % N, r2 = Math.floor(i / N), c2 = i % N;
+    if (r1 !== r2 && c1 !== c2) { this.setState({ cSel: i }); return; }
+    const cells = [];
+    if (r1 === r2) { const a = Math.min(c1, c2), b = Math.max(c1, c2); for (let c = a; c <= b; c++) cells.push(r1 * N + c); }
+    else { const a = Math.min(r1, r2), b = Math.max(r1, r2); for (let r = a; r <= b; r++) cells.push(r * N + c1); }
+    const str = cells.map(x => g.letters[x]).join(''), rev = str.split('').reverse().join('');
+    const hit = g.placed.find(p => !S.cFound.includes(p.w) && (p.w === str || p.w === rev));
+    if (hit) {
+      const nf = [...S.cFound, hit.w];
+      this.setState({ cFound: nf, cFoundCells: [...S.cFoundCells, ...cells], cSel: null });
+      if (nf.length === g.placed.length) setTimeout(() => this.setState({ pDone: true }), 800);
+    } else {
+      this.setState({ cBad: cells, cSel: null });
+      setTimeout(() => this.setState({ cBad: [] }), 450);
+    }
+  }
+
+  nextQ = () => {
+    this.setState(s => {
+      if (s.pIdx >= s.pq.length - 1) { clearInterval(this.tt); return { pDone: true }; }
+      return { pIdx: s.pIdx + 1, pPicked: null, pResult: null, pInput: '', tleft: this.timerMax() };
+    }, () => { if (!this.state.pDone) this.startTimer(); });
+  };
+
+  answer(ok, picked) {
+    if (this.state.pResult) return;
+    clearInterval(this.tt);
+    this.setState(s => ({ pPicked: picked, pResult: ok ? 'benar' : 'salah', pScore: s.pScore + (ok ? 1 : 0) }));
+    setTimeout(this.nextQ, 1400);
+  }
+
+  renderVals() {
+    const S = this.state, qs = this.getQs(), showConf = this.props.tampilkanConfidence ?? true;
+    const screen = S.screen;
+    const flowScreens = ['upload', 'proses', 'review', 'template', 'publish'];
+    const stepIdx = { upload: 0, proses: 0, review: 1, template: 2, publish: 3 }[screen] ?? 0;
+    const G = "'Gabarito',sans-serif";
+    const steps = ['Unggah', 'Review AI', 'Template', 'Bagikan'].map((label, i) => {
+      const done = i < stepIdx, active = i === stepIdx;
+      return {
+        label, n: done ? '✓' : String(i + 1),
+        numStyle: { width: 24, height: 24, borderRadius: '50%', display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 700, fontFamily: G, background: done || active ? '#0E8A7B' : '#E1EAE7', color: done || active ? '#FFFFFF' : '#8A968F', flexShrink: 0 },
+        labStyle: { fontSize: 13, fontWeight: active ? 700 : 600, color: active ? '#182420' : '#8A968F' },
+        lineStyle: i < 3 ? { width: 24, height: 2, borderRadius: 2, background: done ? '#0E8A7B' : '#E1EAE7' } : { display: 'none' }
+      };
+    });
+    const pct = Math.min(100, Math.round(S.progress));
+    const aiStepDefs = [['Membaca teks & gambar (OCR)', 0], ['Mendeteksi nomor & tipe soal', 30], ['Mencocokkan kunci jawaban', 58], ['Menyusun draft latihan', 84]];
+    const aiSteps = aiStepDefs.map(([label, th], i) => {
+      const next = aiStepDefs[i + 1] ? aiStepDefs[i + 1][1] : 100;
+      const done = pct >= next, active = !done && pct >= th;
+      return {
+        label, icon: done ? '✓' : (active ? '●' : '○'),
+        iconStyle: { width: 20, textAlign: 'center', fontWeight: 800, color: done ? '#0E8A7B' : (active ? '#6D5AE6' : '#C3CCC7') },
+        labStyle: { fontSize: 14, fontWeight: active ? 700 : 500, color: done ? '#41544E' : (active ? '#182420' : '#9AA6A1') }
+      };
+    });
+    const badgeMap = { pg: 'Pilihan Ganda', bs: 'Benar / Salah', isian: 'Isian' };
+    const qVals = qs.map((q, i) => {
+      const editing = S.editingId === q.id, isIsian = q.type === 'isian';
+      const upd = (patch) => this.setState({ qs: this.getQs().map(x => x.id === q.id ? { ...x, ...patch } : x) });
+      return {
+        no: i + 1, q: q.q, key: q.key || '', badge: badgeMap[q.type], low: !!q.low,
+        showConf, isEditing: editing, notEditing: !editing, hasOpts: !isIsian, isIsian,
+        editLabel: editing ? 'Selesai' : 'Edit',
+        confLabel: q.low ? 'Periksa · ' + q.conf + '%' : q.conf + '% yakin',
+        confStyle: { background: q.low ? '#FDF0D5' : '#DCF1EC', color: q.low ? '#92610A' : '#0A6E62', borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: 700 },
+        cardStyle: { background: q.low ? '#FFFCF4' : '#FFFFFF', border: q.low ? '1.5px solid #E8B75A' : '1px solid #E3E7E2', borderRadius: 18, padding: 20 },
+        onEdit: () => this.setState({ editingId: editing ? null : q.id }),
+        onDel: () => this.setState({ qs: this.getQs().filter(x => x.id !== q.id) }),
+        onText: (e) => upd({ q: e.target.value }),
+        onKey: (e) => upd({ key: e.target.value }),
+        opts: (q.opts || []).map((o, oi) => ({
+          label: (q.type === 'pg' ? 'ABCD'[oi] + '.  ' : '') + o,
+          mark: oi === q.correct ? '✓  ' : '',
+          onPick: () => upd({ correct: oi }),
+          style: {
+            textAlign: 'left', borderRadius: 11, padding: '11px 14px', fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all .15s',
+            background: oi === q.correct ? '#DCF1EC' : '#FFFFFF',
+            border: oi === q.correct ? '1.5px solid #0E8A7B' : '1.5px solid #E3E7E2',
+            color: oi === q.correct ? '#0A6E62' : '#41544E'
+          }
+        }))
+      };
+    });
+    const sw = (on) => ({
+      track: { width: 46, height: 26, borderRadius: 999, background: on ? '#0E8A7B' : '#D6DDD9', position: 'relative', border: 'none', cursor: 'pointer', transition: 'background .2s', flexShrink: 0 },
+      knob: { position: 'absolute', top: 3, left: on ? 23 : 3, width: 20, height: 20, borderRadius: '50%', background: '#FFFFFF', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.3)' }
+    });
+    const acakSw = sw(S.acak), timerSw = sw(S.timerOn);
+    const pq = S.pq.length ? S.pq : qs;
+    const cq = pq[Math.min(S.pIdx, pq.length - 1)] || qs[0];
+    const revealed = !!S.pResult, isianQ = cq.type === 'isian';
+    const keyText = isianQ ? cq.key : (cq.opts || [])[cq.correct];
+    const pOpts = (cq.opts || []).map((o, i) => {
+      const base = { padding: '18px 20px', borderRadius: 16, fontSize: 17, fontWeight: 600, textAlign: 'left', cursor: 'pointer', border: '2px solid #E3E7E2', background: '#FFFFFF', color: '#182420', transition: 'all .15s' };
+      if (revealed) {
+        base.cursor = 'default';
+        if (i === cq.correct) { base.background = '#DCF1EC'; base.border = '2px solid #0E8A7B'; base.color = '#0A6E62'; base.fontWeight = 700; }
+        else if (i === S.pPicked) { base.background = '#FCE9E9'; base.border = '2px solid #D64545'; base.color = '#B03030'; }
+        else base.opacity = .45;
+      }
+      return { label: (cq.type === 'pg' ? 'ABCD'[i] + '.  ' : '') + o, style: base, onPick: () => this.answer(i === cq.correct, i) };
+    });
+    const fbMap = { benar: 'Benar! +1 poin', salah: 'Kurang tepat — kunci: ' + keyText, habis: 'Waktu habis — kunci: ' + keyText };
+    const ratio = pq.length ? S.pScore / pq.length : 0;
+    const tpct = Math.max(0, S.tleft / this.timerMax() * 100);
+    const mode = S.mode || 'kuis';
+    const kuisLike = mode === 'kuis' || mode === 'cepat', mkey = kuisLike ? 'kuis' : mode;
+    const jp = S.jPairs || [];
+    const fc = (S.fCards && S.fCards.length) ? S.fCards : [{ front: '—', back: '—' }];
+    const fCur = fc[Math.min(S.fIdx, fc.length - 1)];
+    const swd = (S.sWords && S.sWords.length) ? S.sWords : [{ w: 'OKSIGEN', clue: 'Gas hasil fotosintesis', tiles: ['K', 'S', 'I', 'O', 'G', 'E', 'N'] }];
+    const wCur = swd[Math.min(S.sIdx, swd.length - 1)];
+    const jLeft = jp.map(p => {
+      const matched = S.jMatched.includes(p.id), sel = S.jSel === p.id;
+      return { label: p.l, onPick: () => this.jPickL(p.id), style: { textAlign: 'left', borderRadius: 12, padding: '13px 16px', fontSize: 14.5, fontWeight: 600, transition: 'all .15s', cursor: matched ? 'default' : 'pointer', background: matched ? '#DCF1EC' : sel ? '#ECE8FC' : '#FFFFFF', border: matched ? '2px solid #9CD4C7' : sel ? '2px solid #6D5AE6' : '2px solid #E3E7E2', color: matched ? '#0A6E62' : sel ? '#4A3DB8' : '#182420', opacity: matched ? .6 : 1 } };
+    });
+    const jRight = (S.jOrder || []).map(id => {
+      const p = jp.find(x => x.id === id) || { r: '' };
+      const matched = S.jMatched.includes(id), wrong = S.jWrong === id;
+      return { label: p.r, onPick: () => this.jPickR(id), style: { textAlign: 'left', borderRadius: 12, padding: '13px 16px', fontSize: 14.5, fontWeight: 700, transition: 'all .15s', cursor: matched ? 'default' : 'pointer', background: matched ? '#DCF1EC' : wrong ? '#FCE9E9' : '#FFFFFF', border: matched ? '2px solid #9CD4C7' : wrong ? '2px solid #D64545' : '2px solid #E3E7E2', color: matched ? '#0A6E62' : wrong ? '#B03030' : '#182420', opacity: matched ? .6 : 1 } };
+    });
+    const fCardStyle = { minHeight: 280, borderRadius: 24, border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: '40px 36px', textAlign: 'center', width: '100%', background: S.fBack ? '#0E8A7B' : '#FFFFFF', color: S.fBack ? '#FFFFFF' : '#182420', boxShadow: '0 18px 44px rgba(0,0,0,.28)', transition: 'background .25s, color .25s' };
+    const fTagStyle = { borderRadius: 999, padding: '5px 14px', fontSize: 12, fontWeight: 700, background: S.fBack ? 'rgba(255,255,255,.2)' : '#ECE8FC', color: S.fBack ? '#FFFFFF' : '#4A3DB8' };
+    const fDots = fc.map((_, i) => ({ style: { width: i === S.fIdx ? 22 : 8, height: 8, borderRadius: 999, background: i === S.fIdx ? '#F6C445' : 'rgba(255,255,255,.35)', transition: 'all .2s' } }));
+    const sSlots = wCur.w.split('').map((_, i) => ({ ch: S.sBuilt[i] != null ? wCur.tiles[S.sBuilt[i]] : '', style: { width: 46, height: 52, borderRadius: 12, display: 'grid', placeItems: 'center', fontFamily: G, fontWeight: 800, fontSize: 22, background: S.sOk ? '#DCF1EC' : S.sBad ? '#FCE9E9' : '#F2F4F1', border: S.sOk ? '2px solid #0E8A7B' : S.sBad ? '2px solid #D64545' : '2px dashed #C3CCC7', color: S.sOk ? '#0A6E62' : S.sBad ? '#B03030' : '#182420' } }));
+    const sTiles = wCur.tiles.map((ch, i) => { const used = S.sBuilt.includes(i); return { ch, onPick: () => this.sPick(i), style: { width: 46, height: 52, borderRadius: 12, fontFamily: G, fontWeight: 800, fontSize: 20, cursor: used ? 'default' : 'pointer', background: used ? '#E7EDEA' : '#FFFFFF', color: used ? 'transparent' : '#182420', border: '1px solid #E3E7E2', boxShadow: used ? 'none' : '0 4px 10px rgba(24,36,32,.14)', transition: 'all .12s' } }; });
+    const cg = S.cGrid || { N: 10, letters: [], placed: [] };
+    const cCells = cg.letters.map((ch, i) => {
+      const found = S.cFoundCells.includes(i), sel = S.cSel === i, bad = S.cBad.includes(i);
+      return { ch, onPick: () => this.cPick(i), style: { aspectRatio: '1/1', border: 'none', borderRadius: 8, fontFamily: G, fontWeight: 700, fontSize: 15, cursor: 'pointer', padding: 0, transition: 'all .12s', background: bad ? '#D64545' : sel ? '#6D5AE6' : found ? '#0E8A7B' : '#F2F4F1', color: (bad || sel || found) ? '#FFFFFF' : '#182420' } };
+    });
+    const cWords = cg.placed.map(p => { const f = S.cFound.includes(p.w); return { w: p.w, style: { borderRadius: 999, padding: '6px 14px', fontSize: 13, fontWeight: 700, background: f ? '#DCF1EC' : '#F2F4F1', color: f ? '#0A6E62' : '#41544E', textDecoration: f ? 'line-through' : 'none' } }; });
+    const totals = { kuis: pq.length, jodoh: jp.length, flash: fc.length, susun: swd.length, cari: cg.placed.length };
+    const scores = { kuis: S.pScore, jodoh: S.jScore, flash: S.fSeen.length, susun: S.sSolved, cari: S.cFound.length };
+    const total = totals[mkey] || 1, score = scores[mkey] || 0, r2 = score / total;
+    const pCounter = mkey === 'kuis' ? 'Soal ' + Math.min(S.pIdx + 1, pq.length) + ' / ' + pq.length : mode === 'jodoh' ? 'Pasangan ' + S.jMatched.length + ' / ' + total : mode === 'flash' ? 'Kartu ' + Math.min(S.fIdx + 1, total) + ' / ' + total : mode === 'cari' ? 'Ditemukan ' + S.cFound.length + ' / ' + total : 'Kata ' + Math.min(S.sIdx + 1, total) + ' / ' + total;
+    const pScoreChip = mode === 'flash' ? 'Dilihat: ' + S.fSeen.length + '/' + total : 'Skor: ' + score;
+    const pFinal = mode === 'flash' ? total + ' kartu' : score + '/' + total;
+    const pMsgTxt = mode === 'flash' ? 'Semua kartu selesai ditinjau. Ulangi kapan saja!' : r2 === 1 ? 'Sempurna! Semua jawaban benar.' : r2 >= .7 ? 'Kerja bagus, sedikit lagi sempurna!' : 'Terus berlatih, kamu pasti bisa!';
+    const bands = { Kuis: '#DCF1EC', 'Benar / Salah': '#ECE8FC', Isian: '#FBEED3', Menjodohkan: '#ECE8FC', Flashcard: '#FBEED3', 'Susun Kata': '#DCF1EC', 'Kuis Cepat': '#ECE8FC', 'Cari Kata': '#E1EAE7' };
+    const dashCards = [
+      { title: 'Kuis Fotosintesis', tpl: 'Kuis', meta: '8 soal · 128 kali dimainkan', pmode: 'kuis' },
+      { title: 'Benar/Salah: Fakta IPA', tpl: 'Benar / Salah', meta: '2 soal · 64 kali dimainkan', pmode: 'kuis', filter: 'bs' },
+      { title: 'Isian Singkat IPA', tpl: 'Isian', meta: '1 soal · 40 kali dimainkan', pmode: 'kuis', filter: 'isian' },
+      { title: 'Menjodohkan Istilah IPA', tpl: 'Menjodohkan', meta: '5 pasangan · 86 kali dimainkan', pmode: 'jodoh' },
+      { title: 'Flashcard Istilah IPA', tpl: 'Flashcard', meta: '8 kartu · 54 kali dimainkan', pmode: 'flash' },
+      { title: 'Susun Kata IPA', tpl: 'Susun Kata', meta: '4 kata · 31 kali dimainkan', pmode: 'susun' },
+      { title: 'Kuis Cepat Fotosintesis', tpl: 'Kuis Cepat', meta: '8 soal · timer 8 detik', pmode: 'cepat' },
+      { title: 'Cari Kata: Istilah IPA', tpl: 'Cari Kata', meta: '4 kata tersembunyi · 47 kali dimainkan', pmode: 'cari' }
+    ].map(c => ({ ...c,
+      onPlay: c.disabled ? () => {} : () => this.beginPlay('dash', c.pmode, c.filter),
+      playLabel: c.disabled ? 'Segera' : 'Mainkan',
+      playStyle: { flex: 1, border: 'none', borderRadius: 10, padding: '9px 0', fontWeight: 700, fontSize: 13, cursor: c.disabled ? 'default' : 'pointer', background: c.disabled ? '#F2F4F1' : '#EEF3F1', color: c.disabled ? '#9AA6A1' : '#0E3F39' },
+      bandStyle: { height: 86, background: bands[c.tpl], display: 'grid', placeItems: 'center' } }));
+    return {
+      isDash: screen === 'dash', isUpload: screen === 'upload', isProses: screen === 'proses', isReview: screen === 'review', isTemplate: screen === 'template', isPublish: screen === 'publish', isMain: screen === 'main',
+      flowMode: flowScreens.includes(screen), steps,
+      goDash: () => { clearInterval(this.tt); this.setState({ screen: 'dash' }); },
+      goUpload: () => this.setState({ screen: 'upload' }),
+      goReview: () => this.setState({ screen: 'review' }),
+      goTemplate: () => this.setState({ screen: 'template' }),
+      goPublish: () => this.setState({ screen: 'publish' }),
+      demoPlay: () => this.beginPlay('dash', true),
+      startPlay: () => this.beginPlay('publish'),
+      exitPlay: () => { clearInterval(this.tt); this.setState({ screen: S.ret }); },
+      playAgain: () => this.beginPlay(S.ret || 'dash', S.mode || 'kuis', S.pFilter),
+      addFile: (e) => { if (e) e.stopPropagation(); if (!S.files.some(f => f.name.endsWith('.jpg'))) this.setState({ files: [...S.files, { name: 'soal-ipa-bab3-hal1.jpg', size: '1,2 MB' }, { name: 'soal-ipa-bab3-hal2.jpg', size: '0,9 MB' }] }); },
+      addText: (e) => { if (e) e.stopPropagation(); if (!S.files.some(f => f.name.endsWith('.txt'))) this.setState({ files: [...S.files, { name: 'soal-tempel.txt', size: 'teks · 14 baris' }] }); },
+      startManual: (e) => { if (e) e.stopPropagation(); const id = Date.now(); this.setState({ screen: 'review', manual: true, qs: [{ id, type: 'pg', q: 'Soal baru — ketik pertanyaanmu di sini.', opts: ['Opsi A', 'Opsi B', 'Opsi C', 'Opsi D'], correct: 0, conf: 100 }], editingId: id }); },
+      hasSource: !S.manual,
+      reviewTitle: S.manual ? 'Susun soal manual' : 'Review hasil AI',
+      reviewBack: S.manual ? 'Unggah foto saja' : 'Unggah ulang',
+      reviewSub: S.manual ? qs.length + ' soal · buat manual — klik opsi untuk mengubah kunci jawaban' : qs.length + ' soal terdeteksi dari 2 halaman · klik opsi untuk mengubah kunci jawaban',
+      reviewGridStyle: S.manual ? { display: 'grid', gridTemplateColumns: '1fr', gap: 26, alignItems: 'start', maxWidth: 760, margin: '0 auto', width: '100%' } : { display: 'grid', gridTemplateColumns: '230px 1fr', gap: 26, alignItems: 'start' },
+      files: S.files.map((f, i) => ({ ...f, onRemove: (e) => { e.stopPropagation(); this.setState({ files: S.files.filter((_, j) => j !== i) }); } })),
+      hasFiles: S.files.length > 0, fileCount: S.files.length,
+      startProses: this.startProses,
+      progressPct: pct + '%',
+      barStyle: { height: '100%', width: pct + '%', background: 'linear-gradient(90deg,#0E8A7B,#6D5AE6)', borderRadius: 999, transition: 'width .2s' },
+      aiSteps,
+      qs: qVals, qCount: qs.length,
+      hasLow: qs.some(q => q.low), lowCount: qs.filter(q => q.low).length,
+      addQ: () => { const id = Date.now(); this.setState({ qs: [...qs, { id, type: 'pg', q: 'Soal baru — ketik pertanyaanmu di sini.', opts: ['Opsi A', 'Opsi B', 'Opsi C', 'Opsi D'], correct: 0, conf: 100 }], editingId: id }); },
+      pkKuis: () => this.pickTpl('Kuis'), pkBS: () => this.pickTpl('Benar / Salah'), pkIsian: () => this.pickTpl('Isian'), pkJodoh: () => this.pickTpl('Menjodohkan'), pkFlash: () => this.pickTpl('Flashcard'), pkSusun: () => this.pickTpl('Susun Kata'), pkCari: () => this.pickTpl('Cari Kata'), pkCepat: () => this.pickTpl('Kuis Cepat'),
+      tplLabel: S.tpl || 'Kuis', published: S.published, dashCards, dashCount: (S.published ? 9 : 8) + ' aktivitas',
+      title: S.title, onTitle: (e) => this.setState({ title: e.target.value }),
+      copyLabel: S.copied ? 'Tersalin ✓' : 'Salin', 
+      copyLink: () => { try { navigator.clipboard.writeText('https://soalsnap.id/m/X7K2E9'); } catch (e) {} this.setState({ copied: true }); setTimeout(() => this.setState({ copied: false }), 1600); },
+      toggleAcak: () => this.setState({ acak: !S.acak }), toggleTimer: () => this.setState({ timerOn: !S.timerOn }),
+      acakTrack: acakSw.track, acakKnob: acakSw.knob, timerTrack: timerSw.track, timerKnob: timerSw.knob,
+      timerDetik: this.timerMax(), timerOn: S.timerOn,
+      pPlaying: !S.pDone, pDone: S.pDone,
+      pModeKuis: kuisLike, pModeJodoh: mode === 'jodoh', pModeFlash: mode === 'flash', pModeSusun: mode === 'susun', pModeCari: mode === 'cari',
+      pTimerShow: S.timerOn && kuisLike,
+      pCounter, pScoreChip, pFinal,
+      jLeft, jRight, fCardStyle, fTagStyle, fDots,
+      fTag: S.fBack ? 'JAWABAN' : 'PERTANYAAN', fText: S.fBack ? fCur.back : fCur.front,
+      fFlip: () => this.setState({ fBack: !S.fBack }),
+      fPrev: () => this.setState({ fIdx: Math.max(0, S.fIdx - 1), fBack: false }),
+      fNext: () => { if (S.fIdx >= fc.length - 1) { this.setState({ pDone: true }); } else { this.setState({ fIdx: S.fIdx + 1, fBack: false, fSeen: S.fSeen.includes(S.fIdx + 1) ? S.fSeen : [...S.fSeen, S.fIdx + 1] }); } },
+      fNextLabel: S.fIdx >= fc.length - 1 ? 'Selesai' : 'Berikutnya →',
+      sClue: wCur.clue, sSlots, sTiles, sOkShow: S.sOk, cCells, cWords,
+      sBack: () => { if (!S.sOk) this.setState({ sBuilt: S.sBuilt.slice(0, -1), sBad: false }); },
+      sReset: () => { if (!S.sOk) this.setState({ sBuilt: [], sBad: false }); },
+      pQ: cq.q, pBadge: badgeMap[cq.type], pHasOpts: !isianQ, pIsIsian: isianQ, pOpts,
+      pInput: S.pInput, onPInput: (e) => this.setState({ pInput: e.target.value }),
+      submitIsian: () => this.answer(S.pInput.trim().toLowerCase() === (cq.key || '').toLowerCase(), null),
+      pHasFb: revealed, pFb: fbMap[S.pResult] || '',
+      pFbStyle: { alignSelf: 'center', borderRadius: 999, padding: '10px 22px', fontWeight: 700, fontSize: 15, background: S.pResult === 'benar' ? '#DCF1EC' : '#FCE9E9', color: S.pResult === 'benar' ? '#0A6E62' : '#B03030', animation: 'popin .25s ease' },
+      tStyle: { height: '100%', width: tpct + '%', background: S.tleft <= 5 ? '#F6C445' : '#7FD9C8', borderRadius: 999, transition: 'width 1s linear' },
+      pMsg: pMsgTxt
+    };
+  }
+}
+</script>
+</body>
+</html>
