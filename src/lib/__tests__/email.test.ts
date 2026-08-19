@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { kabarKontak } from "../email/kabar";
+import { alamatKirim, susunFormMailgun } from "../email/mailgun";
 import { alamatSama, perluKirim, susunPesanTautan } from "../email/pesan";
 
 const isi = {
@@ -118,5 +119,62 @@ describe("kabar untuk pembuat soal", () => {
     });
     expect(kabar.baik).toBe(false);
     expect(kabar.teks).toContain("gagal dikirim");
+  });
+});
+
+describe("permintaan Mailgun", () => {
+  const surat = susunPesanTautan(isi);
+
+  it("menyusun alamat kirim dari domain pengirim", () => {
+    expect(alamatKirim("mail.soalsnap.web.id")).toBe(
+      "https://api.mailgun.net/v3/mail.soalsnap.web.id/messages",
+    );
+  });
+
+  it("menghormati pangkal API region lain", () => {
+    expect(alamatKirim("mail.soalsnap.web.id", "https://api.eu.mailgun.net")).toBe(
+      "https://api.eu.mailgun.net/v3/mail.soalsnap.web.id/messages",
+    );
+  });
+
+  it("tidak menghasilkan garis miring ganda", () => {
+    expect(alamatKirim("d.contoh.id", "https://api.mailgun.net/")).toBe(
+      "https://api.mailgun.net/v3/d.contoh.id/messages",
+    );
+  });
+
+  it("membawa pengirim, tujuan, dan kedua bentuk badan surel", () => {
+    const form = susunFormMailgun({
+      dari: "SoalSnap <tautan@mail.soalsnap.web.id>",
+      tujuan: "bu.rina@sekolah.id",
+      surat,
+    });
+    expect(form.get("from")).toBe("SoalSnap <tautan@mail.soalsnap.web.id>");
+    expect(form.get("to")).toBe("bu.rina@sekolah.id");
+    expect(form.get("subject")).toContain("Fotosintesis");
+    expect(form.get("text")).toContain(isi.tautanEdit);
+    expect(form.get("html")).toContain("jangan dibagikan");
+  });
+
+  it("memasang Reply-To sebagai header Mailgun", () => {
+    const form = susunFormMailgun({
+      dari: "SoalSnap <tautan@mail.soalsnap.web.id>",
+      tujuan: "bu.rina@sekolah.id",
+      balasKe: "  noreply@soalsnap.web.id  ",
+      surat,
+    });
+    expect(form.get("h:Reply-To")).toBe("noreply@soalsnap.web.id");
+  });
+
+  it("melewatkan Reply-To kalau tidak diisi", () => {
+    for (const balasKe of [undefined, "", "   "]) {
+      const form = susunFormMailgun({
+        dari: "SoalSnap <tautan@mail.soalsnap.web.id>",
+        tujuan: "bu.rina@sekolah.id",
+        balasKe,
+        surat,
+      });
+      expect(form.has("h:Reply-To")).toBe(false);
+    }
   });
 });

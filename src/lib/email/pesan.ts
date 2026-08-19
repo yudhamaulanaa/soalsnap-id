@@ -1,3 +1,5 @@
+import type { Creator } from "../types";
+
 /**
  * Isi surel "Kirimkan tautannya ke saya" pada halaman Bagikan.
  *
@@ -36,6 +38,21 @@ export interface HasilKirim {
   terkirim: boolean;
   kode: KodeKirim;
   alasan?: string;
+}
+
+export interface KirimTautan {
+  kepada: Creator;
+  judul: string;
+  tautanEdit: string;
+  tautanMain: string;
+}
+
+/**
+ * Kontrak penyedia surel. Ditaruh di sini, bukan di `notify.ts`, supaya modul
+ * penyedia bisa memakainya tanpa saling mengimpor dengan pemilih penyedianya.
+ */
+export interface Pengirim {
+  kirim(pesan: KirimTautan): Promise<HasilKirim>;
 }
 
 /**
