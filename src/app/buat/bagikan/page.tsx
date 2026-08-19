@@ -1,0 +1,214 @@
+"use client";
+
+import { Suspense } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { AppHeader } from "@/components/AppHeader";
+import { CentangIcon, MainIcon } from "@/components/Icons";
+import { CopyLinkButton } from "@/components/CopyLinkButton";
+import { QrCode } from "@/components/QrCode";
+import { Switch } from "@/components/Switch";
+import { tautanPenuh, tautanTampil } from "@/lib/format";
+import { useStore } from "@/lib/store";
+import { templateCount, templateLabel } from "@/lib/templates";
+import { TIMER_MAX, TIMER_MIN } from "@/lib/types";
+
+/** Page 06 — Bagikan. */
+export default function BagikanPage() {
+  return (
+    <Suspense fallback={<AppHeader step={3} />}>
+      <BagikanIsi />
+    </Suspense>
+  );
+}
+
+function BagikanIsi() {
+  const params = useSearchParams();
+  const lastId = useStore((s) => s.lastActivityId);
+  const id = params.get("id") ?? lastId;
+  const activity = useStore((s) => s.activities.find((a) => a.id === id));
+  const ubahAktivitas = useStore((s) => s.ubahAktivitas);
+
+  if (!activity) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <AppHeader step={3} />
+        <main className="mx-auto flex w-full max-w-[620px] flex-col items-center gap-4 px-6 pt-20 text-center">
+          <h1 className="m-0 font-display text-2xl font-bold">Aktivitas tidak ditemukan</h1>
+          <p className="m-0 text-[15px] text-ink-3">
+            Tautannya mungkin sudah dihapus. Mulai dari dashboard untuk membuat yang baru.
+          </p>
+          <Link
+            href="/"
+            className="rounded-full bg-teal px-7 py-3.5 font-display text-base font-bold text-surface no-underline hover:text-surface hover:no-underline"
+          >
+            Ke Dashboard
+          </Link>
+        </main>
+      </div>
+    );
+  }
+
+  const url = tautanPenuh(activity.slug);
+  const jumlah = templateCount(activity.template, activity.questions);
+
+  return (
+    <div className="flex min-h-screen flex-col">
+      <AppHeader step={3} />
+
+      <main className="mx-auto grid w-full max-w-[1020px] grid-cols-1 items-start gap-7 px-6 pb-20 pt-11 lg:grid-cols-[1.25fr_.75fr]">
+        <section className="flex animate-popin flex-col gap-5 rounded-hero border border-line bg-surface p-9">
+          <div className="flex items-center gap-4">
+            <span className="grid h-[54px] w-[54px] shrink-0 place-items-center rounded-full bg-teal-light text-teal">
+              <CentangIcon size={26} />
+            </span>
+            <div>
+              <h1 className="m-0 font-display text-[26px] font-extrabold">
+                Aktivitas siap dibagikan!
+              </h1>
+              <p className="m-0 mt-0.5 text-sm text-ink-3">
+                Template: <strong className="text-teal-dark">{templateLabel(activity.template)}</strong>{" "}
+                · {jumlah} soal · siswa main tanpa login
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="judul"
+              className="text-[11px] font-bold tracking-[.08em] text-dim"
+            >
+              JUDUL AKTIVITAS
+            </label>
+            <input
+              id="judul"
+              value={activity.title}
+              onChange={(e) => ubahAktivitas(activity.id, { title: e.target.value })}
+              className="w-full rounded-xl border-[1.5px] border-line px-4 py-3 font-display text-[19px] font-bold text-ink outline-none focus:border-teal"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[11px] font-bold tracking-[.08em] text-dim">
+              TAUTAN SISWA
+            </span>
+            <div className="flex gap-2.5">
+              <div className="flex-1 truncate rounded-xl bg-app px-4 py-[13px] text-[15px] font-semibold text-teal-dark">
+                {tautanTampil(activity.slug)}
+              </div>
+              <CopyLinkButton url={url} label="Salin" />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3.5 border-t border-line-soft pt-5">
+            <div className="flex items-center gap-3.5">
+              <Switch
+                on={activity.acak}
+                onToggle={() => ubahAktivitas(activity.id, { acak: !activity.acak })}
+                label="Acak urutan soal"
+              />
+              <div>
+                <div className="text-[14.5px] font-semibold">Acak urutan soal</div>
+                <div className="text-[12.5px] text-dim">Tiap siswa mendapat urutan berbeda</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3.5">
+              <Switch
+                on={activity.timerOn}
+                onToggle={() => ubahAktivitas(activity.id, { timerOn: !activity.timerOn })}
+                label="Timer per soal"
+              />
+              <div className="flex-1">
+                <div className="text-[14.5px] font-semibold">
+                  Timer per soal ({activity.timerDetik} detik)
+                </div>
+                <div className="text-[12.5px] text-dim">Waktu habis dihitung salah</div>
+              </div>
+            </div>
+
+            {activity.timerOn && (
+              <label className="flex items-center gap-3 pl-[60px] text-xs font-semibold text-ink-3">
+                {TIMER_MIN} dtk
+                <input
+                  type="range"
+                  min={TIMER_MIN}
+                  max={TIMER_MAX}
+                  step={1}
+                  value={activity.timerDetik}
+                  onChange={(e) =>
+                    ubahAktivitas(activity.id, { timerDetik: Number(e.target.value) })
+                  }
+                  aria-label="Durasi timer per soal"
+                  className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-fill-3 accent-teal"
+                />
+                {TIMER_MAX} dtk
+              </label>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-3 border-t border-line-soft pt-5">
+            <Link
+              href={`/main/${activity.slug}?pratinjau=1`}
+              className="flex flex-1 items-center justify-center gap-2.5 rounded-[14px] bg-ai px-4 py-[15px] font-display text-base font-bold text-surface no-underline transition-all hover:-translate-y-0.5 hover:bg-ai-hover hover:text-surface hover:no-underline"
+            >
+              <MainIcon size={16} />
+              Coba Mainkan — Pratinjau Siswa
+            </Link>
+            <Link
+              href="/"
+              className="rounded-[14px] border-[1.5px] border-line px-[22px] py-[15px] text-sm font-semibold text-ink-2 no-underline transition-colors hover:border-line-hover hover:text-ink-2 hover:no-underline"
+            >
+              Ke Dashboard
+            </Link>
+          </div>
+        </section>
+
+        <aside className="top-[88px] flex flex-col gap-4 lg:sticky">
+          <div className="flex flex-col gap-3 rounded-3xl bg-forest p-5">
+            <div className="text-[11px] font-bold tracking-[.08em] text-mint-dim">
+              TAMPILAN SISWA
+            </div>
+            <StudentPreview
+              total={jumlah}
+              soal={activity.questions[0]?.q ?? "Soal pertama akan tampil di sini"}
+            />
+          </div>
+
+          <div className="flex items-center gap-4 rounded-panel border border-line bg-surface p-5">
+            <QrCode url={url} />
+            <div>
+              <div className="text-[14.5px] font-bold">Pindai untuk main</div>
+              <div className="mt-0.5 text-[12.5px] text-dim">
+                Tampilkan QR ini di proyektor kelas
+              </div>
+            </div>
+          </div>
+        </aside>
+      </main>
+    </div>
+  );
+}
+
+function StudentPreview({ total, soal }: { total: number; soal: string }) {
+  return (
+    <div className="flex flex-col gap-2.5 rounded-2xl bg-surface p-4">
+      <div className="flex items-center justify-between">
+        <span className="rounded-full bg-ai-light px-2.5 py-[3px] text-[10px] font-bold text-ai">
+          SOAL 1/{total}
+        </span>
+        <span className="text-[10px] font-bold text-dim">SKOR 0</span>
+      </div>
+      <div className="h-[5px] rounded-full bg-fill-3">
+        <div className="h-full w-[70%] rounded-full bg-mint" />
+      </div>
+      <p className="m-0 line-clamp-2 font-display text-[13px] font-bold leading-[1.4]">{soal}</p>
+      <div className="grid grid-cols-2 gap-1.5">
+        <div className="h-6 rounded-[7px] border-[1.5px] border-line" />
+        <div className="h-6 rounded-[7px] border-[1.5px] border-teal bg-teal-light" />
+        <div className="h-6 rounded-[7px] border-[1.5px] border-line" />
+        <div className="h-6 rounded-[7px] border-[1.5px] border-line" />
+      </div>
+    </div>
+  );
+}

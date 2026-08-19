@@ -1,0 +1,175 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens — values transcribed verbatim from project/UIKit.md.
+ * Nothing here is invented: every hex, radius and shadow appears in the
+ * SoalSnap design files.
+ */
+@theme {
+  /* Teal — warna produk */
+  --color-teal: #0e8a7b;
+  --color-teal-dark: #0a6e62;
+  --color-teal-light: #dcf1ec;
+  --color-teal-pale: #cdebe4;
+  --color-forest: #0e3f39;
+  --color-mint: #7fd9c8;
+  --color-mint-dim: #7fc8ba;
+  --color-mint-bright: #9fe8da;
+  --color-mint-soft: #bfe0d9;
+  --color-mint-edge: #9cd4c7;
+
+  /* Ungu — penanda AI */
+  --color-ai: #6d5ae6;
+  --color-ai-hover: #5b48d4;
+  --color-ai-dark: #4a3db8;
+  --color-ai-light: #ece8fc;
+  --color-ai-mid: #a99af0;
+  --color-ai-soft: #c9bff5;
+
+  /* Kuning — skor & peringatan */
+  --color-score: #f6c445;
+  --color-warn-bg: #fdf0d5;
+  --color-warn-fg: #92610a;
+  --color-risk-bg: #fffcf4;
+  --color-risk-line: #e8b75a;
+  --color-sand: #fbeed3;
+  --color-amber: #e8a33d;
+  --color-amber-dark: #b4831e;
+
+  /* Merah — salah & hapus */
+  --color-wrong: #d64545;
+  --color-wrong-bg: #fce9e9;
+  --color-wrong-fg: #b03030;
+
+  /* Teks */
+  --color-ink: #182420;
+  --color-ink-2: #41544e;
+  --color-ink-3: #5b6963;
+  --color-dim: #8a968f;
+  --color-dim-2: #9aa6a1;
+
+  /* Permukaan & garis */
+  --color-app: #f2f4f1;
+  --color-surface: #ffffff;
+  --color-line: #e3e7e2;
+  --color-line-hover: #b8cfc9;
+  --color-line-soft: #eef1ee;
+  --color-fill: #eef3f1;
+  --color-fill-2: #e1eae7;
+  --color-fill-3: #e7edea;
+  --color-fill-4: #d6ddd9;
+  --color-fill-5: #c3ccc7;
+  --color-tint: #f7fbfa;
+  --color-tint-2: #f0faf7;
+
+  /* Kertas (ilustrasi dokumen) */
+  --color-paper: #fff9ec;
+  --color-paper-line: #e4dfd1;
+  --color-paper-head: #d8d2c2;
+  --color-paper-edge: #eae3d2;
+  --color-paper-hl: #cde8e1;
+  --color-paper-hl-2: #b9e2d8;
+  --color-paper-mute: #eae6da;
+  --color-paper-mute-2: #c4e7dd;
+
+  /* Tipografi */
+  --font-display: var(--font-gabarito), sans-serif;
+  --font-sans: var(--font-onest), system-ui, sans-serif;
+
+  /* Radius — kontrol kecil → panel besar */
+  --radius-control: 8px;
+  --radius-card: 14px;
+  --radius-panel: 20px;
+  --radius-hero: 26px;
+
+  /* Bayangan */
+  --shadow-card-hover: 0 8px 24px rgba(24, 36, 32, 0.08);
+  --shadow-lift: 0 12px 28px rgba(24, 36, 32, 0.1);
+  --shadow-sticky: 0 12px 32px rgba(24, 36, 32, 0.12);
+  --shadow-on-dark: 0 18px 44px rgba(0, 0, 0, 0.28);
+
+  /* Animasi */
+  --animate-popin: popin 0.3s ease;
+  --animate-popin-fast: popin 0.25s ease;
+  --animate-popin-slow: popin 0.35s ease;
+  --animate-scanline: scanline 2.2s ease-in-out infinite;
+  --animate-floaty: floaty 5s ease-in-out infinite;
+
+  @keyframes popin {
+    from {
+      transform: scale(0.94);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  @keyframes scanline {
+    0% {
+      top: 6%;
+    }
+    50% {
+      top: 88%;
+    }
+    100% {
+      top: 6%;
+    }
+  }
+  @keyframes floaty {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-7px);
+    }
+  }
+}
+
+/* Semuanya di `base` agar utilitas Tailwind tetap menang atas gaya dasar. */
+@layer base {
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--color-app);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: var(--color-teal-pale);
+  }
+
+  a {
+    color: var(--color-teal);
+    text-decoration: none;
+  }
+  a:hover {
+    color: var(--color-teal-dark);
+    text-decoration: underline;
+  }
+
+  button,
+  input,
+  textarea {
+    font-family: var(--font-sans);
+  }
+
+  /* Sisi siswa: latar gelap dipasang di <body> agar area di luar viewport ikut gelap. */
+  body:has([data-surface="dark"]) {
+    background: var(--color-forest);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
