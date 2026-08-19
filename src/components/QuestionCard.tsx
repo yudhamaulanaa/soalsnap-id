@@ -79,7 +79,11 @@ export function QuestionCard({
           value={q.q}
           onChange={(e) => onChange({ q: e.target.value })}
           aria-label={`Teks soal nomor ${no}`}
-          className="mt-3 min-h-16 w-full resize-y rounded-[10px] border-[1.5px] border-teal px-3 py-2.5 text-[15px] leading-[1.5] outline-none"
+          // rows=1 agar tinggi ditentukan `min-height` 64px seperti desain,
+          // bukan tinggi dua baris bawaan textarea.
+          rows={1}
+          // `block` menghilangkan celah baseline bawaan elemen inline.
+          className="mt-3 block min-h-16 w-full resize-y rounded-[10px] border-[1.5px] border-teal px-3 py-2.5 text-[15px] leading-[1.5] outline-none"
         />
       ) : (
         <p className="m-0 mt-3 text-base font-semibold leading-[1.5] text-pretty">{q.q}</p>
@@ -91,10 +95,14 @@ export function QuestionCard({
             const kunci = i === q.correct;
             const prefix = q.type === "pg" ? `${"ABCD"[i] ?? ""}.  ` : "";
             return editing ? (
+              // Kotak mode edit dibuat setinggi kotak baca agar tinggi kartu
+              // tidak berubah saat masuk/keluar mode edit.
               <div
                 key={i}
-                className={`flex items-center gap-2 rounded-[11px] border-[1.5px] px-3 py-1.5 ${
-                  kunci ? "border-teal bg-teal-light" : "border-line bg-surface"
+                className={`flex items-center gap-2 rounded-[11px] border-[1.5px] px-3.5 py-[11px] text-sm font-semibold ${
+                  kunci
+                    ? "border-teal bg-teal-light text-teal-dark"
+                    : "border-line bg-surface text-ink-2"
                 }`}
               >
                 {/* FR-RV-4: menandai kunci melepas kunci sebelumnya. */}
@@ -103,7 +111,7 @@ export function QuestionCard({
                   onClick={() => onChange({ correct: i })}
                   title="Jadikan kunci jawaban"
                   aria-label={`Jadikan opsi ${i + 1} kunci jawaban`}
-                  className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold ${
+                  className={`grid h-4 w-4 shrink-0 place-items-center rounded-full text-[10px] leading-none ${
                     kunci ? "bg-teal text-surface" : "bg-fill-2 text-dim"
                   }`}
                 >
@@ -113,9 +121,7 @@ export function QuestionCard({
                   value={o}
                   onChange={(e) => setOpsi(i, e.target.value)}
                   aria-label={`Opsi ${i + 1}`}
-                  className={`w-full bg-transparent py-1 text-sm font-semibold outline-none ${
-                    kunci ? "text-teal-dark" : "text-ink-2"
-                  }`}
+                  className="w-full bg-transparent p-0 text-sm font-semibold text-inherit outline-none"
                 />
               </div>
             ) : (
@@ -157,7 +163,7 @@ export function QuestionCard({
       )}
 
       {q.low && (
-        <p className="m-0 mt-3 rounded-[10px] bg-warn-bg px-3.5 py-2.5 text-[13px] font-semibold text-warn-fg">
+        <p className="m-0 mt-3 rounded-[10px] bg-warn-bg px-[14px] py-[9px] text-[13px] font-semibold text-warn-fg">
           {q.note ??
             "Foto agak buram di nomor ini — pastikan kunci jawabannya sudah benar."}
         </p>

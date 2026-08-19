@@ -14,8 +14,10 @@ export function AppHeader({ step }: Props) {
   const inFlow = step !== undefined;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-surface">
-      <div className="mx-auto flex h-16 max-w-[1160px] items-center gap-4 px-6">
+    // Tinggi 64px sudah termasuk garis bawah (border-box), sama seperti desain.
+    <header className="sticky top-0 z-50 h-16 border-b border-line bg-surface">
+      {/* Isi header melebar penuh dengan padding 24px, seperti berkas desain. */}
+      <div className="flex h-full items-center gap-4 px-6">
         <Link href="/" className="flex items-center gap-2.5 no-underline hover:no-underline">
           <span className="grid h-[34px] w-[34px] place-items-center rounded-[11px] bg-teal text-surface">
             <KameraIcon size={18} />

@@ -76,6 +76,24 @@
   --font-display: var(--font-gabarito), sans-serif;
   --font-sans: var(--font-onest), system-ui, sans-serif;
 
+  /*
+   * Berkas desain tidak pernah menyetel line-height global — nilainya `normal`
+   * (≈1.2), bukan 1.5 bawaan Tailwind, dan tiap ukuran teks juga tidak membawa
+   * line-height sendiri. Menyamakannya di sini membuat tinggi setiap elemen
+   * persis seperti desain; `leading-*` tetap dipakai di tempat desain memang
+   * menyebut angkanya.
+   */
+  --default-font-line-height: normal;
+  --text-xs--line-height: normal;
+  --text-sm--line-height: normal;
+  --text-base--line-height: normal;
+  --text-lg--line-height: normal;
+  --text-xl--line-height: normal;
+  --text-2xl--line-height: normal;
+  --text-3xl--line-height: normal;
+  --text-4xl--line-height: normal;
+  --text-5xl--line-height: normal;
+
   /* Radius — kontrol kecil → panel besar */
   --radius-control: 8px;
   --radius-card: 14px;
@@ -136,6 +154,8 @@
     background: var(--color-app);
     color: var(--color-ink);
     font-family: var(--font-sans);
+    /* Menimpa preflight Tailwind (1.5) — berkas desain memakai `normal`. */
+    line-height: normal;
     -webkit-font-smoothing: antialiased;
   }
 

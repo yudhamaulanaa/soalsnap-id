@@ -35,7 +35,7 @@ export default function DashboardPage() {
               <br />
               jadi latihannya.
             </h1>
-            <p className="m-0 max-w-[440px] text-base leading-relaxed text-mint-soft text-pretty">
+            <p className="m-0 max-w-[440px] text-base leading-[1.6] text-mint-soft text-pretty">
               Unggah foto, PDF, atau dokumen soal — AI memecahnya menjadi latihan
               interaktif yang siap dimainkan siswa lewat satu tautan.
             </p>

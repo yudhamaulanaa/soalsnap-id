@@ -307,7 +307,7 @@ export default function UnggahPage() {
 
         <aside className="flex flex-col gap-2 rounded-2xl bg-ai-light px-5 py-[18px]">
           <div className="text-sm font-bold text-ai-dark">Tips hasil terbaik</div>
-          <div className="text-[13.5px] leading-relaxed text-ai-dark opacity-85">
+          <div className="text-[13.5px] leading-[1.6] text-ai-dark opacity-85">
             Pastikan teks terbaca jelas dan tidak terpotong · Kunci jawaban di dokumen ikut
             terdeteksi otomatis · Satu unggahan boleh berisi banyak nomor dan halaman
           </div>
