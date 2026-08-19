@@ -9,7 +9,7 @@ Implementasi dari paket desain Claude Design di `project/` (lihat [Asal desain](
 
 ```bash
 npm install
-cp .env.example .env      # DATABASE_URL="file:./dev.db"
+cp .env.example .env      # DATABASE_URL, APP_URL, dan (opsional) kunci Resend
 npm run db:migrate        # membuat tabel
 npm run db:seed           # delapan contoh publik (opsional)
 npm run dev               # http://localhost:3000
@@ -74,6 +74,32 @@ dan mata pelajaran. Nama peserta yang mengisi papan skor terlihat oleh siapa pun
 yang memegang tautan peserta; kontak pembuat (nama/email/telepon) hanya disimpan
 untuk mengirimkan kembali tautannya dan tidak pernah ditampilkan di katalog.
 
+## Pengiriman tautan lewat email
+
+Di halaman Bagikan, pembuat soal bisa menitipkan alamatnya lewat "Kirimkan
+tautannya ke saya"; kedua tautan lalu dikirim ke sana sebagai surel. Penyedianya
+Resend, dipanggil lewat `fetch` tanpa dependensi tambahan:
+
+| Variabel | Kegunaan |
+|---|---|
+| `RESEND_API_KEY` | kunci API Resend |
+| `EMAIL_FROM` | alamat pengirim terverifikasi, mis. `SoalSnap <tautan@soalsnap.id>` |
+| `APP_URL` | asal aplikasi untuk tautan absolut di surel |
+
+Bila `RESEND_API_KEY` atau `EMAIL_FROM` kosong, aplikasi tetap berjalan: tautannya
+dicatat ke log server dan halaman Bagikan mengatakan apa adanya bahwa pengiriman
+belum aktif. Penyedia lain (SMTP) cukup memenuhi antarmuka `Pengirim` yang sama di
+`src/lib/notify.ts`.
+
+`APP_URL` sebaiknya diisi di produksi. Tanpa itu tautan disusun dari header `Host`
+permintaan, yang bisa dipalsukan sehingga surel memuat tautan ke domain lain.
+
+Tautan dikirim sekali per alamat — kolom `linkSentTo` menjadi penjaganya, jadi
+menyimpan kontak berulang kali tidak memicu surel kedua, sementara memperbaiki
+alamat yang salah ketik tetap memicu kiriman ke alamat baru. Pengiriman hanya
+dicoba pada penyimpanan yang memang membawa email, dan kegagalannya tidak pernah
+menggagalkan penyimpanan aktivitas.
+
 ## Delapan template, satu bank soal
 
 Semua template membaca bank soal yang sama; `src/lib/derive.ts` yang menafsirkannya
@@ -102,6 +128,7 @@ src/app/            rute (App Router) — satu berkas per halaman desain
 src/app/api/        route handler: aktivitas, main, sesi peserta
 src/components/     komponen bersama; components/play/ berisi 5 mode main
 src/lib/            tipe, akses basis data, validasi, turunan bank soal, parser AI
+src/lib/email/      penyusunan & pengiriman surel tautan
 src/lib/__tests__/  tes logika permainan & validasi API
 ```
 
@@ -114,9 +141,6 @@ peramban ini (`src/lib/store.ts`).
 
 ## Yang belum ada
 
-- **Pengiriman email.** Kontak tersimpan dan tautan tampil di layar, tetapi belum
-  ada penyedia email yang dipasang — `src/lib/notify.ts` baru mencatat ke log.
-  Tinggal menukar implementasi `Pengirim` dengan Resend/SMTP.
 - **Unggahan berkas sungguhan.** Berkas dipilih dan divalidasi di klien, lalu
   parsing-nya disimulasikan; berkasnya sendiri tidak dikirim ke server.
 - **Moderasi katalog.** Soal publik langsung tampil tanpa peninjauan.

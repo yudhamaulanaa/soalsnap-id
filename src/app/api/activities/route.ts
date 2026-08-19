@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
+import { asalAplikasi, tautanEditPenuh, tautanMainPenuh } from "@/lib/asal";
 import { prisma } from "@/lib/db";
-import { pengirim } from "@/lib/notify";
+import { kirimTautanKePembuat } from "@/lib/email/kirim";
 import { aktivitasDari, soalKeBaris } from "@/lib/serialize";
 import { buatEditSlug, buatPlaySlug } from "@/lib/slug";
 import { buatAktivitasSchema, pesanValidasi } from "@/lib/validasi";
@@ -43,23 +44,14 @@ export async function POST(request: Request) {
     include: { questions: { orderBy: { urutan: "asc" } } },
   });
 
-  const asal = new URL(request.url).origin;
-  const tautanEdit = `${asal}/edit/${activity.editSlug}`;
-  const tautanMain = `${asal}/main/${activity.playSlug}`;
+  const asal = asalAplikasi(request);
+  const tautanEdit = tautanEditPenuh(asal, activity.editSlug);
+  const tautanMain = tautanMainPenuh(asal, activity.playSlug);
 
-  // Pengiriman email belum aktif; kegagalannya tidak boleh menggagalkan simpan.
-  const notifikasi = await pengirim
-    .kirim({
-      kepada: {
-        name: activity.creatorName,
-        email: activity.creatorEmail,
-        phone: activity.creatorPhone,
-      },
-      judul: activity.title,
-      tautanEdit,
-      tautanMain,
-    })
-    .catch(() => ({ terkirim: false, alasan: "pengiriman gagal" }));
+  // Kegagalan pengiriman tidak boleh menggagalkan penyimpanan.
+  const notifikasi = activity.creatorEmail
+    ? await kirimTautanKePembuat(activity, asal)
+    : undefined;
 
   return NextResponse.json(
     {

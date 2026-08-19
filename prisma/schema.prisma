@@ -37,6 +37,11 @@ model Activity {
   creatorEmail String?
   creatorPhone String?
 
+  /// Alamat tujuan terakhir yang berhasil dikirimi tautan. Menjadi penjaga
+  /// agar tautan tidak dikirim ulang setiap kali kontak disimpan.
+  linkSentTo String?
+  linkSentAt DateTime?
+
   plays     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

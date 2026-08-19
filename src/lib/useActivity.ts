@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useStore } from "./store";
+import type { HasilKirim } from "./email/pesan";
 import type { Activity, PlaySession, Question, Visibility } from "./types";
 
 export interface UbahAktivitas {
@@ -14,6 +15,12 @@ export interface UbahAktivitas {
   mapel?: string | null;
   questions?: Question[];
   creator?: { name?: string; email?: string; phone?: string };
+}
+
+/** Balasan server atas satu penyimpanan; `notifikasi` hanya ada bila kontaknya ikut dikirim. */
+export interface HasilSimpan {
+  activity: Activity;
+  notifikasi?: HasilKirim;
 }
 
 type Status = "memuat" | "siap" | "menyimpan" | "hilang" | "gagal";
@@ -56,7 +63,7 @@ export function useActivity(editSlug: string) {
   }, [editSlug]);
 
   const simpan = useCallback(
-    (patch: UbahAktivitas) => {
+    (patch: UbahAktivitas): Promise<HasilSimpan | undefined> => {
       // Tampilkan perubahan seketika, lalu kirim ke server berurutan agar
       // dua penyuntingan cepat tidak saling mendahului.
       setActivity((a) => {
@@ -78,7 +85,7 @@ export function useActivity(editSlug: string) {
       setStatus("menyimpan");
       setPesan(null);
 
-      antre.current = antre.current
+      const berjalan = antre.current
         .then(() =>
           fetch(`/api/activities/${editSlug}`, {
             method: "PATCH",
@@ -92,12 +99,15 @@ export function useActivity(editSlug: string) {
           setActivity(data.activity);
           setStatus("siap");
           if (patch.title) perbaruiMilikku(editSlug, { title: data.activity.title });
+          return data as HasilSimpan;
         })
         .catch((e: unknown) => {
           setPesan(e instanceof Error ? e.message : "Gagal menyimpan");
           setStatus("gagal");
+          return undefined;
         });
-      return antre.current;
+      antre.current = berjalan;
+      return berjalan;
     },
     [editSlug, perbaruiMilikku],
   );

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { asalAplikasi } from "@/lib/asal";
 import { prisma } from "@/lib/db";
+import { kirimTautanKePembuat } from "@/lib/email/kirim";
 import { aktivitasDari, sesiDari, soalKeBaris } from "@/lib/serialize";
 import { pesanValidasi, ubahAktivitasSchema } from "@/lib/validasi";
 import type { Question } from "@/lib/types";
@@ -81,8 +83,15 @@ export async function PATCH(request: Request, { params }: Ctx) {
     });
   });
 
+  // Tautan hanya dikirim pada penyimpanan yang memang membawa alamat email;
+  // penyuntingan biasa tidak menyentuh penyedia surel.
+  const notifikasi = data.creator?.email?.trim()
+    ? await kirimTautanKePembuat(activity, asalAplikasi(request))
+    : undefined;
+
   return NextResponse.json({
     activity: aktivitasDari(activity, { sertakanEditSlug: true }),
+    notifikasi,
   });
 }
 
