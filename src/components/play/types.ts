@@ -10,6 +10,9 @@ export interface PlayReport {
   finalLabel: string;
   /** 0–1, menentukan pesan capaian. */
   ratio: number;
+  /** Nilai yang disimpan sebagai PlaySession. */
+  score: number;
+  total: number;
   done: boolean;
 }
 

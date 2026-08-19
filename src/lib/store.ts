@@ -2,25 +2,13 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { seedActivities } from "./seed";
-import { validateQuestions } from "./ai/parser";
-import type {
-  Activity,
-  Draft,
-  Question,
-  SourcePage,
-  TemplateId,
-  UploadFileRef,
-} from "./types";
-import { TIMER_DEFAULT, TIMER_KUIS_CEPAT } from "./types";
+import type { Draft, Question, SourcePage, TemplateId, UploadFileRef } from "./types";
 
-const KODE = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-
-function buatSlug(): string {
-  let s = "";
-  for (let i = 0; i < 6; i++) s += KODE[Math.floor(Math.random() * KODE.length)];
-  return s;
-}
+/**
+ * Tanpa akun pengguna, satu-satunya jejak kepemilikan adalah tautan sunting
+ * yang disimpan di peramban pembuatnya. Draft yang belum tersimpan ke server
+ * juga tinggal di sini.
+ */
 
 function buatId(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -38,11 +26,18 @@ export function soalKosong(sumber: Question["sumber"] = "manual"): Question {
   };
 }
 
+/** Catatan aktivitas yang dibuat dari peramban ini. */
+export interface Milikku {
+  editSlug: string;
+  playSlug: string;
+  title: string;
+  template: TemplateId;
+  createdAt: number;
+}
+
 interface State {
-  activities: Activity[];
   draft: Draft | null;
-  /** Aktivitas terakhir yang dipublikasikan — dipakai layar Bagikan. */
-  lastActivityId: string | null;
+  mine: Milikku[];
   hydrated: boolean;
 }
 
@@ -50,11 +45,11 @@ interface Actions {
   setHydrated: () => void;
 
   // — Alur unggah —
-  mulaiUnggah: () => void;
   tambahFile: (files: UploadFileRef[]) => void;
   hapusFile: (id: string) => void;
   simpanHasilAI: (questions: Question[], sourcePages: SourcePage[]) => void;
   mulaiManual: () => void;
+  buangDraft: () => void;
 
   // — Editor review —
   ubahSoal: (id: string, patch: Partial<Question>) => void;
@@ -62,11 +57,10 @@ interface Actions {
   tambahSoal: () => void;
   ubahModeEdit: (id: string | null) => void;
 
-  // — Publikasi & dashboard —
-  publikasikan: (template: TemplateId) => Activity | null;
-  ubahAktivitas: (id: string, patch: Partial<Activity>) => void;
-  catatSesiMain: (id: string) => void;
-  buangTandaBaru: () => void;
+  // — Daftar milik peramban ini —
+  catatMilikku: (entry: Milikku) => void;
+  perbaruiMilikku: (editSlug: string, patch: Partial<Milikku>) => void;
+  lupakanMilikku: (editSlug: string) => void;
 }
 
 export type Store = State & Actions;
@@ -74,19 +68,11 @@ export type Store = State & Actions;
 export const useStore = create<Store>()(
   persist(
     (set, get) => ({
-      activities: seedActivities(),
       draft: null,
-      lastActivityId: null,
+      mine: [],
       hydrated: false,
 
       setHydrated: () => set({ hydrated: true }),
-
-      mulaiUnggah: () =>
-        set((s) =>
-          s.draft?.origin === "upload" && s.draft.questions.length === 0
-            ? s
-            : { draft: { origin: "upload", files: [], questions: [] } },
-        ),
 
       tambahFile: (files) =>
         set((s) => {
@@ -109,21 +95,16 @@ export const useStore = create<Store>()(
 
       simpanHasilAI: (questions, sourcePages) =>
         set((s) => ({
-          draft: {
-            origin: "upload",
-            files: s.draft?.files ?? [],
-            questions,
-            sourcePages,
-          },
+          draft: { origin: "upload", files: s.draft?.files ?? [], questions, sourcePages },
         })),
 
       mulaiManual: () => {
         // Jalur manual membuka editor dengan satu soal kosong (FR-UP-6).
         const q = soalKosong();
-        set({
-          draft: { origin: "manual", files: [], questions: [q], editingId: q.id },
-        });
+        set({ draft: { origin: "manual", files: [], questions: [q], editingId: q.id } });
       },
+
+      buangDraft: () => set({ draft: null }),
 
       ubahSoal: (id, patch) =>
         set((s) =>
@@ -131,9 +112,7 @@ export const useStore = create<Store>()(
             ? {
                 draft: {
                   ...s.draft,
-                  questions: s.draft.questions.map((q) =>
-                    q.id === id ? { ...q, ...patch } : q,
-                  ),
+                  questions: s.draft.questions.map((q) => (q.id === id ? { ...q, ...patch } : q)),
                 },
               }
             : s,
@@ -157,94 +136,34 @@ export const useStore = create<Store>()(
         const q = soalKosong(get().draft?.origin ?? "manual");
         set((s) =>
           s.draft
-            ? {
-                draft: {
-                  ...s.draft,
-                  questions: [...s.draft.questions, q],
-                  editingId: q.id,
-                },
-              }
+            ? { draft: { ...s.draft, questions: [...s.draft.questions, q], editingId: q.id } }
             : s,
         );
       },
 
       ubahModeEdit: (id) => set((s) => (s.draft ? { draft: { ...s.draft, editingId: id } } : s)),
 
-      publikasikan: (template) => {
-        const draft = get().draft;
-        if (!draft || draft.questions.length === 0) return null;
-
-        const activity: Activity = {
-          id: buatId("act"),
-          slug: buatSlug(),
-          title: judulUsulan(draft.questions),
-          template,
-          acak: false,
-          timerOn: true,
-          timerDetik: template === "cepat" ? TIMER_KUIS_CEPAT : TIMER_DEFAULT,
-          status: "published",
-          plays: 0,
-          questions: validateQuestions(draft.questions),
-          createdAt: Date.now(),
-          fresh: true,
-          sourcePages: draft.sourcePages,
-        };
-
+      catatMilikku: (entry) =>
         set((s) => ({
-          activities: [activity, ...s.activities.map((a) => ({ ...a, fresh: false }))],
-          lastActivityId: activity.id,
-          draft: null,
-        }));
-        return activity;
-      },
-
-      ubahAktivitas: (id, patch) =>
-        set((s) => ({
-          activities: s.activities.map((a) => (a.id === id ? { ...a, ...patch } : a)),
+          mine: [entry, ...s.mine.filter((m) => m.editSlug !== entry.editSlug)].slice(0, 60),
         })),
 
-      catatSesiMain: (id) =>
+      perbaruiMilikku: (editSlug, patch) =>
         set((s) => ({
-          activities: s.activities.map((a) => (a.id === id ? { ...a, plays: a.plays + 1 } : a)),
+          mine: s.mine.map((m) => (m.editSlug === editSlug ? { ...m, ...patch } : m)),
         })),
 
-      buangTandaBaru: () =>
-        set((s) => ({ activities: s.activities.map((a) => ({ ...a, fresh: false })) })),
+      lupakanMilikku: (editSlug) =>
+        set((s) => ({ mine: s.mine.filter((m) => m.editSlug !== editSlug) })),
     }),
     {
-      name: "soalsnap-v1",
+      name: "soalsnap-v2",
       storage: createJSONStorage(() => localStorage),
       // Render pertama di klien harus sama dengan HTML dari server; rehidrasi
       // dijalankan manual oleh <StoreHydration /> setelah mount.
       skipHydration: true,
-      partialize: ({ activities, draft, lastActivityId }) => ({
-        activities,
-        draft,
-        lastActivityId,
-      }),
+      partialize: ({ draft, mine }) => ({ draft, mine }),
       onRehydrateStorage: () => (state) => state?.setHydrated(),
     },
   ),
 );
-
-/** Judul awal diusulkan dari isi soal (FR-SH-1). */
-function judulUsulan(questions: Question[]): string {
-  const first = questions[0]?.q ?? "";
-  const kata = first
-    .replace(/[…_]+/g, " ")
-    .split(/\s+/)
-    .filter((w) => w.length > 3)
-    .slice(0, 4)
-    .join(" ");
-  return kata ? `Latihan: ${kata}` : "Latihan baru";
-}
-
-export const useActivities = () => useStore((s) => s.activities);
-
-export function useActivity(id: string | null | undefined): Activity | undefined {
-  return useStore((s) => s.activities.find((a) => a.id === id));
-}
-
-export function useActivityBySlug(slug: string): Activity | undefined {
-  return useStore((s) => s.activities.find((a) => a.slug === slug));
-}

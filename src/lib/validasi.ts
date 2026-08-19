@@ -1,0 +1,72 @@
+import { z } from "zod";
+import { KELAS, MAPEL } from "./kategori";
+import { TEMPLATES } from "./templates";
+import { TIMER_MAX, TIMER_MIN } from "./types";
+
+/** Skema masukan API. Semua data dari luar melewati berkas ini. */
+
+const templateIds = TEMPLATES.map((t) => t.id) as [string, ...string[]];
+
+export const soalSchema = z.object({
+  type: z.enum(["pg", "bs", "isian"]),
+  q: z.string().trim().min(1, "Teks soal tidak boleh kosong").max(2000),
+  opts: z.array(z.string().max(500)).max(8).optional(),
+  correct: z.number().int().min(0).max(7).optional(),
+  key: z.string().max(500).optional(),
+  conf: z.number().int().min(0).max(100).default(100),
+  low: z.boolean().optional(),
+  note: z.string().max(500).optional(),
+  clue: z.string().max(300).optional(),
+  page: z.number().int().min(1).max(100).optional(),
+  sumber: z.enum(["upload", "manual"]).default("manual"),
+});
+
+export const pengaturanSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  template: z.enum(templateIds),
+  acak: z.boolean(),
+  timerOn: z.boolean(),
+  timerDetik: z.number().int().min(TIMER_MIN).max(TIMER_MAX),
+  visibility: z.enum(["private", "public"]),
+  kelas: z.enum(KELAS).nullable(),
+  mapel: z.enum(MAPEL).nullable(),
+});
+
+export const kontakSchema = z.object({
+  name: z.string().trim().max(120).optional(),
+  // Kosong diperlakukan sebagai tidak diisi — kontak memang opsional.
+  email: z.union([z.email(), z.literal("")]).optional(),
+  phone: z.string().trim().max(30).optional(),
+});
+
+export const buatAktivitasSchema = pengaturanSchema.partial({ title: true }).extend({
+  questions: z.array(soalSchema).min(1, "Minimal satu soal").max(200),
+  creator: kontakSchema.optional(),
+});
+
+export const ubahAktivitasSchema = pengaturanSchema
+  .partial()
+  .extend({
+    questions: z.array(soalSchema).min(1).max(200).optional(),
+    creator: kontakSchema.optional(),
+  });
+
+export const sesiSchema = z.object({
+  playerName: z.string().trim().max(60).optional(),
+  score: z.number().int().min(0).max(1000),
+  total: z.number().int().min(1).max(1000),
+  mode: z.enum(["kuis", "jodoh", "flash", "susun", "cari"]).default("kuis"),
+});
+
+export const katalogQuerySchema = z.object({
+  kelas: z.enum(KELAS).optional(),
+  mapel: z.enum(MAPEL).optional(),
+  q: z.string().trim().max(100).optional(),
+  halaman: z.coerce.number().int().min(1).max(200).default(1),
+});
+
+/** Pesan ringkas untuk ditampilkan ke pengguna. */
+export function pesanValidasi(error: z.ZodError): string {
+  const first = error.issues[0];
+  return first ? `${first.path.join(".") || "data"}: ${first.message}` : "Data tidak valid";
+}

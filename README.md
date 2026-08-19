@@ -9,31 +9,70 @@ Implementasi dari paket desain Claude Design di `project/` (lihat [Asal desain](
 
 ```bash
 npm install
-npm run dev        # http://localhost:3000
+cp .env.example .env      # DATABASE_URL="file:./dev.db"
+npm run db:migrate        # membuat tabel
+npm run db:seed           # delapan contoh publik (opsional)
+npm run dev               # http://localhost:3000
 ```
 
 | Perintah | Kegunaan |
 |---|---|
 | `npm run dev` | server pengembangan |
 | `npm run build` / `npm start` | build & jalankan versi produksi |
-| `npm test` | tes logika permainan (Vitest) |
-| `npm run typecheck` | TypeScript |
-| `npm run lint` | ESLint |
+| `npm test` | tes logika permainan & validasi API (Vitest) |
+| `npm run db:migrate` / `db:seed` / `db:studio` | Prisma |
+| `npm run typecheck` · `npm run lint` | TypeScript · ESLint |
+
+## Tanpa akun: dua tautan rahasia
+
+Tidak ada pendaftaran. Setiap aktivitas punya dua tautan acak, dan tautan itulah
+yang menggantikan akun:
+
+| Tautan | Panjang | Untuk |
+|---|---|---|
+| `/main/[playSlug]` | 6 karakter (~30 bit) | dibagikan ke peserta; cukup pendek untuk didikte di kelas |
+| `/edit/[editSlug]` | 22 karakter (~110 bit) | dipegang pembuat soal: menyunting, mengatur, melihat rekap |
+
+`editSlug` tidak pernah ikut dalam respons API publik maupun katalog. Peramban
+pembuat menyimpan daftar tautan suntingnya di `localStorage` supaya muncul di
+Dashboard — itu satu-satunya "kepemilikan" yang ada, jadi kalau tautannya hilang
+dan penyimpanan peramban terhapus, aktivitas tidak bisa disunting lagi.
 
 ## Halaman
 
 | Rute | Halaman desain |
 |---|---|
-| `/` | 01 Dashboard |
+| `/` | 01 Dashboard — aktivitas peramban ini + soal publik terbaru |
 | `/buat` | 02 Unggah |
 | `/buat/proses` | 03 Proses AI |
 | `/buat/review` | 04 Review Draft |
-| `/buat/template` | 05 Pilih Template |
-| `/buat/bagikan` | 06 Bagikan |
-| `/main/[slug]` | 07 Main Kuis · 08 Mode main lainnya · 09 Hasil |
+| `/buat/template` | 05 Pilih Template — memilih template sekaligus menyimpan ke server |
+| `/buat/bagikan` | 06 Bagikan — dua tautan, privat/publik, kategori, kontak pembuat |
+| `/main/[playSlug]` | 07 Main Kuis · 08 Mode main lainnya · 09 Hasil |
+| `/edit/[editSlug]` | halaman pemilik: sunting soal, rekap peserta, hapus |
+| `/kumpulan` | katalog soal publik, difilter per kelas & mata pelajaran |
 
-`/main/[slug]` adalah halaman siswa: tautan publik, tanpa autentikasi (FR-SH-6).
-Tambahkan `?pratinjau=1` agar tombol Keluar kembali ke layar Bagikan.
+Peserta membuka `/main/[playSlug]`, mengisi nama (boleh dikosongkan), mengerjakan,
+lalu melihat skornya sendiri beserta papan skor. Tambahkan `?pratinjau=1` untuk
+mencoba tanpa hasilnya ikut tercatat.
+
+## Basis data
+
+SQLite lewat Prisma 7 (`prisma/schema.prisma`) dengan tiga tabel sesuai `frd.md` §8:
+`Activity`, `Question`, `PlaySession`. Pindah ke Postgres cukup mengganti
+`provider` beserta adapter-nya — skema dan kueri tidak berubah.
+
+**Catatan penilaian.** Sama seperti prototype, penilaian dihitung di peramban,
+sehingga kunci jawaban ikut terkirim ke halaman peserta. Memadai untuk latihan,
+tetapi bukan untuk ujian bernilai; untuk itu penilaian harus dipindah ke server.
+
+## Katalog & privasi
+
+Aktivitas bersifat **privat** secara bawaan — hanya bisa dibuka lewat tautan.
+Bila dijadikan **publik**, ia tampil di `/kumpulan` dan dapat difilter per kelas
+dan mata pelajaran. Nama peserta yang mengisi papan skor terlihat oleh siapa pun
+yang memegang tautan peserta; kontak pembuat (nama/email/telepon) hanya disimpan
+untuk mengirimkan kembali tautannya dan tidak pernah ditampilkan di katalog.
 
 ## Delapan template, satu bank soal
 
@@ -58,23 +97,32 @@ sisa aplikasi tidak perlu berubah. Tidak ada hasil AI yang bisa melewati layar R
 ## Struktur
 
 ```
+prisma/             skema, migrasi, dan data contoh
 src/app/            rute (App Router) — satu berkas per halaman desain
+src/app/api/        route handler: aktivitas, main, sesi peserta
 src/components/     komponen bersama; components/play/ berisi 5 mode main
-src/lib/            tipe, store, turunan bank soal, kisi cari kata, parser AI
-src/lib/__tests__/  tes logika permainan
+src/lib/            tipe, akses basis data, validasi, turunan bank soal, parser AI
+src/lib/__tests__/  tes logika permainan & validasi API
 ```
 
-**Penyimpanan.** Aktivitas dan draft disimpan di `localStorage` lewat Zustand
-(`src/lib/store.ts`); delapan aktivitas contoh disemai saat pertama dibuka. Belum ada
-backend, database, atau unggahan berkas ke server.
+**Penyimpanan.** Aktivitas, soal, dan hasil peserta ada di basis data. Yang tersisa
+di `localStorage` hanya draft yang belum disimpan dan daftar tautan sunting milik
+peramban ini (`src/lib/store.ts`).
 
 **Gaya.** Tailwind v4. Seluruh token warna, radius, bayangan, dan animasi di
 `src/app/globals.css` disalin apa adanya dari `project/UIKit.md`.
 
 ## Yang belum ada
 
-Backend & database · unggahan berkas sungguhan (file dipilih dan divalidasi di klien,
-tetapi tidak dikirim ke mana pun) · akun pengguna · laporan nilai & leaderboard.
+- **Pengiriman email.** Kontak tersimpan dan tautan tampil di layar, tetapi belum
+  ada penyedia email yang dipasang — `src/lib/notify.ts` baru mencatat ke log.
+  Tinggal menukar implementasi `Pengirim` dengan Resend/SMTP.
+- **Unggahan berkas sungguhan.** Berkas dipilih dan divalidasi di klien, lalu
+  parsing-nya disimulasikan; berkasnya sendiri tidak dikirim ke server.
+- **Moderasi katalog.** Soal publik langsung tampil tanpa peninjauan.
+- **Pembatasan laju.** Belum ada rate limit pada pembuatan aktivitas maupun
+  penyimpanan hasil — perlu ditambahkan sebelum dibuka untuk umum.
+
 Lihat `project/blueprint.md` §11 untuk rencana rilis.
 
 ## Asal desain

@@ -31,6 +31,8 @@ export function ScramblePlay({ questions, report }: ModeProps) {
       scoreChip: `Skor: ${terpecahkan}`,
       finalLabel: `${terpecahkan}/${total}`,
       ratio: total ? terpecahkan / total : 0,
+      score: terpecahkan,
+      total,
       done: selesai,
     });
   }, [idx, terpecahkan, total, selesai, report]);

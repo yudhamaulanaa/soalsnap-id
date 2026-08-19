@@ -24,6 +24,8 @@ export function MatchPlay({ questions, report }: ModeProps) {
       scoreChip: `Skor: ${skor}`,
       finalLabel: `${skor}/${total}`,
       ratio: total ? skor / total : 0,
+      score: skor,
+      total,
       done: selesai,
     });
   }, [cocok.length, skor, total, selesai, report]);

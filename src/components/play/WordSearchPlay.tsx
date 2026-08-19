@@ -26,6 +26,8 @@ export function WordSearchPlay({ questions, report }: ModeProps) {
       scoreChip: `Skor: ${ditemukan.length}`,
       finalLabel: `${ditemukan.length}/${total}`,
       ratio: total ? ditemukan.length / total : 0,
+      score: ditemukan.length,
+      total,
       done: selesai,
     });
   }, [ditemukan.length, total, selesai, report]);

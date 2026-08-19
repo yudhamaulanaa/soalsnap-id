@@ -1,16 +1,17 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
-import { CentangIcon, MainIcon } from "@/components/Icons";
+import { CentangIcon, MainIcon, PensilIcon } from "@/components/Icons";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
+import { KategoriPicker } from "@/components/KategoriPicker";
 import { QrCode } from "@/components/QrCode";
 import { Switch } from "@/components/Switch";
-import { tautanPenuh, tautanTampil } from "@/lib/format";
-import { useStore } from "@/lib/store";
+import { tautanEdit, tautanMain } from "@/lib/format";
 import { templateCount, templateLabel } from "@/lib/templates";
+import { useActivity } from "@/lib/useActivity";
 import { TIMER_MAX, TIMER_MIN } from "@/lib/types";
 
 /** Page 06 — Bagikan. */
@@ -23,20 +24,17 @@ export default function BagikanPage() {
 }
 
 function BagikanIsi() {
-  const params = useSearchParams();
-  const lastId = useStore((s) => s.lastActivityId);
-  const id = params.get("id") ?? lastId;
-  const activity = useStore((s) => s.activities.find((a) => a.id === id));
-  const ubahAktivitas = useStore((s) => s.ubahAktivitas);
+  const editSlug = useSearchParams().get("edit") ?? "";
+  const { activity, status, pesan, simpan } = useActivity(editSlug);
 
-  if (!activity) {
+  if (!editSlug || status === "hilang") {
     return (
       <div className="flex min-h-screen flex-col">
         <AppHeader step={3} />
         <main className="mx-auto flex w-full max-w-[620px] flex-col items-center gap-4 px-6 pt-20 text-center">
           <h1 className="m-0 font-display text-2xl font-bold">Aktivitas tidak ditemukan</h1>
           <p className="m-0 text-[15px] text-ink-3">
-            Tautannya mungkin sudah dihapus. Mulai dari dashboard untuk membuat yang baru.
+            Tautannya mungkin salah ketik atau aktivitasnya sudah dihapus.
           </p>
           <Link
             href="/"
@@ -49,7 +47,19 @@ function BagikanIsi() {
     );
   }
 
-  const url = tautanPenuh(activity.slug);
+  if (!activity) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <AppHeader step={3} />
+        <main className="mx-auto w-full max-w-[620px] px-6 pt-20 text-center text-[15px] text-ink-3">
+          Memuat aktivitas…
+        </main>
+      </div>
+    );
+  }
+
+  const urlMain = tautanMain(activity.playSlug);
+  const urlEdit = tautanEdit(editSlug);
   const jumlah = templateCount(activity.template, activity.questions);
 
   return (
@@ -74,37 +84,50 @@ function BagikanIsi() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="judul"
-              className="text-[11px] font-bold tracking-[.08em] text-dim"
-            >
+            <label htmlFor="judul" className="text-[11px] font-bold tracking-[.08em] text-dim">
               JUDUL AKTIVITAS
             </label>
             <input
               id="judul"
               value={activity.title}
-              onChange={(e) => ubahAktivitas(activity.id, { title: e.target.value })}
+              onChange={(e) => simpan({ title: e.target.value })}
               className="w-full rounded-xl border-[1.5px] border-line px-4 py-3 font-display text-[19px] font-bold text-ink outline-none focus:border-teal"
             />
           </div>
 
+          {/* Dua tautan: satu untuk peserta, satu untuk pemilik soal. */}
           <div className="flex flex-col gap-1.5">
             <span className="text-[11px] font-bold tracking-[.08em] text-dim">
-              TAUTAN SISWA
+              TAUTAN SISWA — bagikan ini
             </span>
             <div className="flex gap-2.5">
               <div className="flex-1 truncate rounded-xl bg-app px-4 py-[13px] text-[15px] font-semibold text-teal-dark">
-                {tautanTampil(activity.slug)}
+                {urlMain}
               </div>
-              <CopyLinkButton url={url} label="Salin" />
+              <CopyLinkButton url={urlMain} label="Salin" />
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[11px] font-bold tracking-[.08em] text-warn-fg">
+              TAUTAN EDIT — simpan, jangan dibagikan
+            </span>
+            <div className="flex gap-2.5">
+              <div className="flex-1 truncate rounded-xl bg-warn-bg px-4 py-[13px] text-[13.5px] font-semibold text-warn-fg">
+                {urlEdit}
+              </div>
+              <CopyLinkButton url={urlEdit} label="Salin" />
+            </div>
+            <p className="m-0 text-[12.5px] text-dim">
+              Tanpa akun, tautan inilah satu-satunya kunci untuk mengubah soal ini nanti.
+            </p>
           </div>
 
           <div className="flex flex-col gap-3.5 border-t border-line-soft pt-5">
             <div className="flex items-center gap-3.5">
               <Switch
                 on={activity.acak}
-                onToggle={() => ubahAktivitas(activity.id, { acak: !activity.acak })}
+                onToggle={() => simpan({ acak: !activity.acak })}
                 label="Acak urutan soal"
               />
               <div>
@@ -116,7 +139,7 @@ function BagikanIsi() {
             <div className="flex items-center gap-3.5">
               <Switch
                 on={activity.timerOn}
-                onToggle={() => ubahAktivitas(activity.id, { timerOn: !activity.timerOn })}
+                onToggle={() => simpan({ timerOn: !activity.timerOn })}
                 label="Timer per soal"
               />
               <div className="flex-1">
@@ -136,9 +159,7 @@ function BagikanIsi() {
                   max={TIMER_MAX}
                   step={1}
                   value={activity.timerDetik}
-                  onChange={(e) =>
-                    ubahAktivitas(activity.id, { timerDetik: Number(e.target.value) })
-                  }
+                  onChange={(e) => simpan({ timerDetik: Number(e.target.value) })}
                   aria-label="Durasi timer per soal"
                   className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-fill-3 accent-teal"
                 />
@@ -147,21 +168,38 @@ function BagikanIsi() {
             )}
           </div>
 
+          <KategoriPicker
+            visibility={activity.visibility}
+            kelas={activity.kelas}
+            mapel={activity.mapel}
+            onChange={simpan}
+          />
+
+          <KontakForm
+            awal={activity.creator ?? null}
+            onSimpan={(creator) => simpan({ creator })}
+          />
+
           <div className="flex flex-wrap gap-3 border-t border-line-soft pt-5">
             <Link
-              href={`/main/${activity.slug}?pratinjau=1`}
+              href={`/main/${activity.playSlug}?pratinjau=1`}
               className="flex flex-1 items-center justify-center gap-2.5 rounded-[14px] bg-ai px-4 py-[15px] font-display text-base font-bold text-surface no-underline transition-all hover:-translate-y-0.5 hover:bg-ai-hover hover:text-surface hover:no-underline"
             >
               <MainIcon size={16} />
               Coba Mainkan — Pratinjau Siswa
             </Link>
             <Link
-              href="/"
-              className="rounded-[14px] border-[1.5px] border-line px-[22px] py-[15px] text-sm font-semibold text-ink-2 no-underline transition-colors hover:border-line-hover hover:text-ink-2 hover:no-underline"
+              href={`/edit/${editSlug}`}
+              className="flex items-center gap-2 rounded-[14px] border-[1.5px] border-line px-[22px] py-[15px] text-sm font-semibold text-ink-2 no-underline transition-colors hover:border-line-hover hover:text-ink-2 hover:no-underline"
             >
-              Ke Dashboard
+              <PensilIcon size={15} />
+              Kelola soal
             </Link>
           </div>
+
+          <p className="m-0 text-right text-xs font-semibold text-dim" role="status">
+            {status === "menyimpan" ? "Menyimpan…" : status === "gagal" ? (pesan ?? "Gagal menyimpan") : "Tersimpan"}
+          </p>
         </section>
 
         <aside className="top-[88px] flex flex-col gap-4 lg:sticky">
@@ -176,7 +214,7 @@ function BagikanIsi() {
           </div>
 
           <div className="flex items-center gap-4 rounded-panel border border-line bg-surface p-5">
-            <QrCode url={url} />
+            <QrCode url={urlMain} />
             <div>
               <div className="text-[14.5px] font-bold">Pindai untuk main</div>
               <div className="mt-0.5 text-[12.5px] text-dim">
@@ -187,6 +225,78 @@ function BagikanIsi() {
         </aside>
       </main>
     </div>
+  );
+}
+
+function KontakForm({
+  awal,
+  onSimpan,
+}: {
+  awal: { name: string | null; email: string | null; phone: string | null } | null;
+  onSimpan: (creator: { name?: string; email?: string; phone?: string }) => Promise<unknown>;
+}) {
+  const [name, setName] = useState(awal?.name ?? "");
+  const [email, setEmail] = useState(awal?.email ?? "");
+  const [phone, setPhone] = useState(awal?.phone ?? "");
+  const [tersimpan, setTersimpan] = useState(false);
+
+  const input =
+    "w-full rounded-xl border-[1.5px] border-line px-4 py-2.5 text-[15px] outline-none focus:border-teal";
+
+  return (
+    <form
+      className="flex flex-col gap-3 border-t border-line-soft pt-5"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        await onSimpan({ name, email, phone });
+        setTersimpan(true);
+        setTimeout(() => setTersimpan(false), 2500);
+      }}
+    >
+      <div>
+        <div className="text-[14.5px] font-semibold">Kirimkan tautannya ke saya</div>
+        <div className="text-[12.5px] text-dim">
+          Supaya tautan edit tidak hilang. Email &amp; telepon opsional.
+        </div>
+      </div>
+      <div className="grid gap-2.5 sm:grid-cols-3">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Nama"
+          aria-label="Nama pembuat"
+          className={input}
+        />
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email (opsional)"
+          aria-label="Email pembuat"
+          className={input}
+        />
+        <input
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="Telepon (opsional)"
+          aria-label="Telepon pembuat"
+          className={input}
+        />
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="submit"
+          className="rounded-full bg-teal px-6 py-2.5 font-display text-sm font-bold text-surface transition-colors hover:bg-teal-dark"
+        >
+          Simpan kontak
+        </button>
+        {tersimpan && (
+          <span className="text-[13px] font-semibold text-teal-dark">
+            Tersimpan. Pengiriman email belum aktif — salin tautannya dulu, ya.
+          </span>
+        )}
+      </div>
+    </form>
   );
 }
 

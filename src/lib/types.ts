@@ -60,22 +60,61 @@ export interface SourcePage {
   count: number;
 }
 
+/** "private" hanya lewat tautan; "public" ikut tampil di katalog. */
+export type Visibility = "private" | "public";
+
 export interface Activity {
   id: string;
-  slug: string;
+  /**
+   * Tautan rahasia pemilik. Hanya ikut dikirim pada respons yang memang
+   * diminta lewat tautan itu — tidak pernah pada katalog atau halaman main.
+   */
+  editSlug?: string;
+  /** Tautan yang dibagikan ke peserta. */
+  playSlug: string;
   title: string;
   template: TemplateId;
   acak: boolean;
   timerOn: boolean;
   timerDetik: number;
-  status: "draft" | "published";
+  visibility: Visibility;
+  kelas: string | null;
+  mapel: string | null;
   /** Jumlah sesi main (FR-DB-1). */
   plays: number;
   questions: Question[];
   createdAt: number;
-  /** Aktivitas yang baru dipublikasikan diberi tanda BARU (FR-DB-4). */
-  fresh?: boolean;
-  sourcePages?: SourcePage[];
+  creator?: Creator;
+}
+
+/** Kontak pembuat — dipakai untuk mengirimkan kembali tautannya. */
+export interface Creator {
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+}
+
+/** Satu kali pengerjaan oleh peserta. */
+export interface PlaySession {
+  id: string;
+  playerName: string | null;
+  score: number;
+  total: number;
+  mode: string;
+  createdAt: number;
+}
+
+/** Ringkasan katalog — tanpa soal & tanpa kunci jawaban. */
+export interface CatalogItem {
+  id: string;
+  playSlug: string;
+  title: string;
+  template: TemplateId;
+  kelas: string | null;
+  mapel: string | null;
+  plays: number;
+  jumlahSoal: number;
+  createdAt: number;
 }
 
 /** Draft yang sedang dikerjakan di alur Unggah → Review → Template → Bagikan. */

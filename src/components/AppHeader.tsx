@@ -40,6 +40,15 @@ export function AppHeader({ step }: Props) {
           </Link>
         ) : (
           <Link
+            href="/kumpulan"
+            className="rounded-full px-3 py-2 text-sm font-semibold text-ink-2 no-underline transition-colors hover:text-teal hover:no-underline"
+          >
+            Kumpulan soal
+          </Link>
+        )}
+
+        {!inFlow && (
+          <Link
             href="/buat"
             className="flex items-center gap-2 rounded-full bg-teal px-5 py-[11px] font-display text-[15px] font-bold text-surface no-underline transition-colors hover:bg-teal-dark hover:text-surface hover:no-underline"
           >

@@ -21,3 +21,17 @@ yarn-error.log*
 # env
 .env*
 !.env.example
+
+/src/generated/prisma
+
+# database lokal (SQLite)
+/dev.db
+/dev.db-journal
+/prisma/*.db
+/prisma/*.db-journal
+
+# skill agen bawaan Prisma (dibuat ulang oleh `prisma init`)
+/.agents/
+/.windsurf/
+/.claude/skills/
+/skills-lock.json

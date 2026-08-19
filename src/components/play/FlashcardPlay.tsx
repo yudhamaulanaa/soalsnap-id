@@ -25,6 +25,8 @@ export function FlashcardPlay({ questions, activity, report }: ModeProps) {
       scoreChip: `Dilihat: ${dilihat.length}/${total}`,
       finalLabel: `${total} kartu`,
       ratio: total ? dilihat.length / total : 0,
+      score: dilihat.length,
+      total,
       done: selesai,
     });
   }, [idx, dilihat.length, total, selesai, report]);

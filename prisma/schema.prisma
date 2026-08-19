@@ -1,0 +1,94 @@
+// Model data SoalSnap — mengikuti frd.md §8, ditambah kebutuhan baru:
+// tanpa akun, dua tautan rahasia per aktivitas, dan katalog soal publik.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Activity {
+  id String @id @default(cuid())
+
+  /// Tautan rahasia pemilik soal — untuk mengedit & melihat rekap.
+  editSlug String @unique
+  /// Tautan publik yang dibagikan ke peserta.
+  playSlug String @unique
+
+  title    String
+  template String
+
+  // Pengaturan main
+  acak       Boolean @default(false)
+  timerOn    Boolean @default(true)
+  timerDetik Int     @default(20)
+
+  /// "private" (hanya lewat tautan) atau "public" (tampil di katalog).
+  visibility String @default("private")
+  /// Kategori katalog; null berarti belum dipilih.
+  kelas String?
+  mapel String?
+
+  // Kontak pembuat — opsional, hanya untuk mengirimkan kembali tautannya.
+  creatorName  String?
+  creatorEmail String?
+  creatorPhone String?
+
+  plays     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  questions Question[]
+  sessions  PlaySession[]
+
+  @@index([visibility, kelas, mapel])
+  @@index([visibility, createdAt])
+}
+
+model Question {
+  id         String   @id @default(cuid())
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  /// Urutan tampil di editor & permainan.
+  urutan Int
+
+  /// "pg" | "bs" | "isian"
+  type String
+  q    String
+  /// Daftar opsi sebagai JSON; SQLite tidak punya tipe larik.
+  opts String?
+  /// Indeks kunci jawaban untuk pg/bs.
+  correct Int?
+  /// Kunci jawaban teks untuk isian.
+  kunci String?
+
+  conf   Int     @default(100)
+  low    Boolean @default(false)
+  note   String?
+  clue   String?
+  page   Int?
+  sumber String  @default("manual")
+
+  @@index([activityId, urutan])
+}
+
+model PlaySession {
+  id         String   @id @default(cuid())
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  /// Nama peserta; kosong berarti bermain anonim.
+  playerName String?
+  score      Int
+  total      Int
+  /// Mode main yang dipakai, untuk membedakan rekap antar template.
+  mode       String   @default("kuis")
+  createdAt  DateTime @default(now())
+
+  @@index([activityId, score])
+  @@index([activityId, createdAt])
+}

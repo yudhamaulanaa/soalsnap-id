@@ -44,6 +44,8 @@ export function QuizPlay({ questions, activity, report }: ModeProps) {
       scoreChip: `Skor: ${skor}`,
       finalLabel: `${skor}/${total}`,
       ratio: total ? skor / total : 0,
+      score: skor,
+      total,
       done: selesai,
     });
   }, [idx, skor, total, selesai, report]);
