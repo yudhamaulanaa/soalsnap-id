@@ -9,7 +9,7 @@ Implementasi dari paket desain Claude Design di `project/` (lihat [Asal desain](
 
 ```bash
 npm install
-cp .env.example .env      # DATABASE_URL, APP_URL, dan (opsional) kunci Resend
+cp .env.example .env      # DATABASE_URL, APP_URL, dan (opsional) kunci Mailgun
 npm run db:migrate        # membuat tabel
 npm run db:seed           # delapan contoh publik (opsional)
 npm run dev               # http://localhost:3000
@@ -80,18 +80,25 @@ untuk mengirimkan kembali tautannya dan tidak pernah ditampilkan di katalog.
 
 Di halaman Bagikan, pembuat soal bisa menitipkan alamatnya lewat "Kirimkan
 tautannya ke saya"; kedua tautan lalu dikirim ke sana sebagai surel. Penyedianya
-Resend, dipanggil lewat `fetch` tanpa dependensi tambahan:
+**Mailgun**, dipanggil lewat `fetch` tanpa dependensi tambahan:
 
 | Variabel | Kegunaan |
 |---|---|
-| `RESEND_API_KEY` | kunci API Resend |
-| `EMAIL_FROM` | alamat pengirim terverifikasi, mis. `SoalSnap <tautan@soalsnap.id>` |
+| `MAILGUN_API_KEY` | kunci API Mailgun (dipakai sebagai Basic auth `api:<kunci>`) |
+| `MAILGUN_DOMAIN` | domain pengirim terverifikasi, mis. `mail.soalsnap.web.id` |
+| `EMAIL_FROM` | alamat From lengkap, mis. `SoalSnap <tautan@mail.soalsnap.web.id>` |
+| `EMAIL_REPLY_TO` | opsional; dikirim sebagai header `Reply-To`, mis. `noreply@soalsnap.web.id` |
+| `MAILGUN_BASE_URL` | opsional; isi `https://api.eu.mailgun.net` untuk akun region Eropa |
 | `APP_URL` | asal aplikasi untuk tautan absolut di surel |
 
-Bila `RESEND_API_KEY` atau `EMAIL_FROM` kosong, aplikasi tetap berjalan: tautannya
-dicatat ke log server dan halaman Bagikan mengatakan apa adanya bahwa pengiriman
-belum aktif. Penyedia lain (SMTP) cukup memenuhi antarmuka `Pengirim` yang sama di
-`src/lib/notify.ts`.
+Bila `MAILGUN_API_KEY`, `MAILGUN_DOMAIN`, atau `EMAIL_FROM` kosong, aplikasi tetap
+berjalan: tautannya dicatat ke log server dan halaman Bagikan mengatakan apa
+adanya bahwa pengiriman belum aktif. Penyedia lain cukup memenuhi antarmuka
+`Pengirim` di `src/lib/email/pesan.ts`; pemilihannya ada di `src/lib/notify.ts`.
+
+Kunci API tidak pernah dibaca di `src/lib/email/mailgun.ts` — konfigurasinya masuk
+sebagai parameter, sehingga modul penyedia bebas rahasia dan penyusunan
+permintaannya bisa diuji tanpa jaringan.
 
 `APP_URL` sebaiknya diisi di produksi. Tanpa itu tautan disusun dari header `Host`
 permintaan, yang bisa dipalsukan sehingga surel memuat tautan ke domain lain.
