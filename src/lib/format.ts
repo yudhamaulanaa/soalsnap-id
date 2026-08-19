@@ -54,6 +54,17 @@ export function formatUkuran(bytes: number): string {
   return `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
 
+/** Tanggal beserta jam, untuk jejak moderasi di halaman admin. */
+export function formatWaktu(ms: number): string {
+  return new Date(ms).toLocaleString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export function formatTanggal(ms: number): string {
   return new Date(ms).toLocaleDateString("id-ID", {
     day: "numeric",

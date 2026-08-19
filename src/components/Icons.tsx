@@ -104,3 +104,16 @@ export const MainIcon = ({ size = 16, ...rest }: IconProps) => (
     <path d="M6 4l14 8-14 8z" />
   </svg>
 );
+
+export const PerisaiIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+  </Icon>
+);
+
+export const BenderaIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+    <path d="M4 22v-7" />
+  </Icon>
+);

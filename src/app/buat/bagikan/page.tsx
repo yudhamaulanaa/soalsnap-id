@@ -9,9 +9,10 @@ import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { KategoriPicker } from "@/components/KategoriPicker";
 import { QrCode } from "@/components/QrCode";
 import { Switch } from "@/components/Switch";
+import { kabarKontak, type Kabar } from "@/lib/email/kabar";
 import { tautanEdit, tautanMain } from "@/lib/format";
 import { templateCount, templateLabel } from "@/lib/templates";
-import { useActivity } from "@/lib/useActivity";
+import { useActivity, type HasilSimpan } from "@/lib/useActivity";
 import { TIMER_MAX, TIMER_MIN } from "@/lib/types";
 
 /** Page 06 — Bagikan. */
@@ -233,12 +234,17 @@ function KontakForm({
   onSimpan,
 }: {
   awal: { name: string | null; email: string | null; phone: string | null } | null;
-  onSimpan: (creator: { name?: string; email?: string; phone?: string }) => Promise<unknown>;
+  onSimpan: (creator: {
+    name?: string;
+    email?: string;
+    phone?: string;
+  }) => Promise<HasilSimpan | undefined>;
 }) {
   const [name, setName] = useState(awal?.name ?? "");
   const [email, setEmail] = useState(awal?.email ?? "");
   const [phone, setPhone] = useState(awal?.phone ?? "");
-  const [tersimpan, setTersimpan] = useState(false);
+  const [mengirim, setMengirim] = useState(false);
+  const [kabar, setKabar] = useState<Kabar | null>(null);
 
   const input =
     "w-full rounded-xl border-[1.5px] border-line px-4 py-2.5 text-[15px] outline-none focus:border-teal";
@@ -248,9 +254,14 @@ function KontakForm({
       className="flex flex-col gap-3 border-t border-line-soft pt-5"
       onSubmit={async (e) => {
         e.preventDefault();
-        await onSimpan({ name, email, phone });
-        setTersimpan(true);
-        setTimeout(() => setTersimpan(false), 2500);
+        if (mengirim) return;
+        setMengirim(true);
+        setKabar(null);
+        const hasil = await onSimpan({ name, email, phone });
+        setMengirim(false);
+        setKabar(
+          kabarKontak({ tersimpan: Boolean(hasil), email, notifikasi: hasil?.notifikasi }),
+        );
       }}
     >
       <div>
@@ -286,13 +297,17 @@ function KontakForm({
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="submit"
-          className="rounded-full bg-teal px-6 py-2.5 font-display text-sm font-bold text-surface transition-colors hover:bg-teal-dark"
+          disabled={mengirim}
+          className="rounded-full bg-teal px-6 py-2.5 font-display text-sm font-bold text-surface transition-colors hover:bg-teal-dark disabled:cursor-not-allowed disabled:bg-dim"
         >
-          Simpan kontak
+          {mengirim ? "Mengirim…" : "Simpan kontak"}
         </button>
-        {tersimpan && (
-          <span className="text-[13px] font-semibold text-teal-dark">
-            Tersimpan. Pengiriman email belum aktif — salin tautannya dulu, ya.
+        {kabar && (
+          <span
+            role="status"
+            className={`text-[13px] font-semibold ${kabar.baik ? "text-teal-dark" : "text-warn-fg"}`}
+          >
+            {kabar.teks}
           </span>
         )}
       </div>

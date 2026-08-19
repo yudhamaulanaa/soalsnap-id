@@ -9,7 +9,7 @@ Implementasi dari paket desain Claude Design di `project/` (lihat [Asal desain](
 
 ```bash
 npm install
-cp .env.example .env      # DATABASE_URL="file:./dev.db"
+cp .env.example .env      # DATABASE_URL, APP_URL, dan (opsional) kunci Resend
 npm run db:migrate        # membuat tabel
 npm run db:seed           # delapan contoh publik (opsional)
 npm run dev               # http://localhost:3000
@@ -51,6 +51,7 @@ dan penyimpanan peramban terhapus, aktivitas tidak bisa disunting lagi.
 | `/main/[playSlug]` | 07 Main Kuis · 08 Mode main lainnya · 09 Hasil |
 | `/edit/[editSlug]` | halaman pemilik: sunting soal, rekap peserta, hapus |
 | `/kumpulan` | katalog soal publik, difilter per kelas & mata pelajaran |
+| `/admin` · `/admin/aktivitas` · `/admin/laporan` | audit & moderasi, di balik sandi |
 
 Peserta membuka `/main/[playSlug]`, mengisi nama (boleh dikosongkan), mengerjakan,
 lalu melihat skornya sendiri beserta papan skor. Tambahkan `?pratinjau=1` untuk
@@ -58,9 +59,10 @@ mencoba tanpa hasilnya ikut tercatat.
 
 ## Basis data
 
-SQLite lewat Prisma 7 (`prisma/schema.prisma`) dengan tiga tabel sesuai `frd.md` §8:
-`Activity`, `Question`, `PlaySession`. Pindah ke Postgres cukup mengganti
-`provider` beserta adapter-nya — skema dan kueri tidak berubah.
+SQLite lewat Prisma 7 (`prisma/schema.prisma`): tiga tabel sesuai `frd.md` §8 —
+`Activity`, `Question`, `PlaySession` — ditambah `Report` untuk antrean laporan
+konten. Pindah ke Postgres cukup mengganti `provider` beserta adapter-nya — skema
+dan kueri tidak berubah.
 
 **Catatan penilaian.** Sama seperti prototype, penilaian dihitung di peramban,
 sehingga kunci jawaban ikut terkirim ke halaman peserta. Memadai untuk latihan,
@@ -73,6 +75,72 @@ Bila dijadikan **publik**, ia tampil di `/kumpulan` dan dapat difilter per kelas
 dan mata pelajaran. Nama peserta yang mengisi papan skor terlihat oleh siapa pun
 yang memegang tautan peserta; kontak pembuat (nama/email/telepon) hanya disimpan
 untuk mengirimkan kembali tautannya dan tidak pernah ditampilkan di katalog.
+
+## Pengiriman tautan lewat email
+
+Di halaman Bagikan, pembuat soal bisa menitipkan alamatnya lewat "Kirimkan
+tautannya ke saya"; kedua tautan lalu dikirim ke sana sebagai surel. Penyedianya
+Resend, dipanggil lewat `fetch` tanpa dependensi tambahan:
+
+| Variabel | Kegunaan |
+|---|---|
+| `RESEND_API_KEY` | kunci API Resend |
+| `EMAIL_FROM` | alamat pengirim terverifikasi, mis. `SoalSnap <tautan@soalsnap.id>` |
+| `APP_URL` | asal aplikasi untuk tautan absolut di surel |
+
+Bila `RESEND_API_KEY` atau `EMAIL_FROM` kosong, aplikasi tetap berjalan: tautannya
+dicatat ke log server dan halaman Bagikan mengatakan apa adanya bahwa pengiriman
+belum aktif. Penyedia lain (SMTP) cukup memenuhi antarmuka `Pengirim` yang sama di
+`src/lib/notify.ts`.
+
+`APP_URL` sebaiknya diisi di produksi. Tanpa itu tautan disusun dari header `Host`
+permintaan, yang bisa dipalsukan sehingga surel memuat tautan ke domain lain.
+
+Tautan dikirim sekali per alamat — kolom `linkSentTo` menjadi penjaganya, jadi
+menyimpan kontak berulang kali tidak memicu surel kedua, sementara memperbaiki
+alamat yang salah ketik tetap memicu kiriman ke alamat baru. Pengiriman hanya
+dicoba pada penyimpanan yang memang membawa email, dan kegagalannya tidak pernah
+menggagalkan penyimpanan aktivitas.
+
+## Admin: audit soal & moderasi
+
+`/admin` adalah halaman peninjauan untuk pemilik layanan — bukan untuk guru. Di
+sana seluruh aktivitas terlihat, **termasuk yang privat**, lengkap dengan isi
+soal dan kunci jawabannya; itu memang tujuannya, supaya penyalahgunaan bisa
+diperiksa. Yang bisa dilakukan:
+
+- menelusuri semua aktivitas, dicari per judul dan disaring per status atau
+  "hanya yang dilaporkan";
+- membaca seluruh soal, kunci, catatan keyakinan AI, kontak pembuat, dan rekap
+  peserta satu aktivitas;
+- **menurunkan** aktivitas dari katalog (jadi privat, dengan alasan tercatat),
+  **memulihkannya**, atau **menghapusnya** beserta soal dan rekapnya;
+- menutup laporan yang masuk sebagai "ditangani" atau "diabaikan".
+
+Tautan sunting pemilik sengaja tidak ditampilkan di halaman admin: untuk audit,
+membaca sudah cukup, dan menampilkannya berarti menyebarkan rahasia pemilik soal.
+
+**Masuk.** Tidak ada tabel pengguna. Sandinya satu, dari `ADMIN_PASSWORD`, ditukar
+dengan cookie `httpOnly` bertanda tangan HMAC yang berlaku 8 jam. Selama variabel
+itu kosong, `/admin` tertutup dan tidak ada sandi bawaan. `ADMIN_SECRET` boleh
+diisi sebagai kunci tanda tangan terpisah; bila dikosongkan, sandinya sendiri yang
+menjadi kunci, sehingga mengganti sandi langsung membatalkan sesi yang berjalan.
+Percobaan masuk dibatasi 8 kali per 10 menit per pemanggil, dan sandinya
+dibandingkan dengan cara waktu-tetap. Setiap halaman `/admin` memeriksa sesinya
+sendiri, tidak menitipkannya ke layout.
+
+## Laporan konten
+
+Di halaman soal ada tombol **Laporkan** yang bisa dipakai siapa saja yang
+memegang tautannya — siswa maupun guru lain — tanpa akun. Laporan masuk ke
+antrean `/admin/laporan` beserta alasan baku (`src/lib/laporan.ts`) dan catatan
+bebas.
+
+Pelapor dikenali lewat hash satu arah dari alamat dan peramban (`src/lib/sidik.ts`)
+semata-mata untuk dua hal: laporan berulang atas aktivitas yang sama tidak
+menumpuk di antrean, dan pengiriman dibatasi 5 laporan per jam per pemanggil.
+Nilainya tidak bisa dikembalikan menjadi alamat IP dan tidak ditampilkan di
+halaman admin.
 
 ## Delapan template, satu bank soal
 
@@ -102,6 +170,8 @@ src/app/            rute (App Router) — satu berkas per halaman desain
 src/app/api/        route handler: aktivitas, main, sesi peserta
 src/components/     komponen bersama; components/play/ berisi 5 mode main
 src/lib/            tipe, akses basis data, validasi, turunan bank soal, parser AI
+src/lib/email/      penyusunan & pengiriman surel tautan
+src/lib/admin/      sesi admin, pembatas laju, kueri audit
 src/lib/__tests__/  tes logika permainan & validasi API
 ```
 
@@ -114,14 +184,15 @@ peramban ini (`src/lib/store.ts`).
 
 ## Yang belum ada
 
-- **Pengiriman email.** Kontak tersimpan dan tautan tampil di layar, tetapi belum
-  ada penyedia email yang dipasang — `src/lib/notify.ts` baru mencatat ke log.
-  Tinggal menukar implementasi `Pengirim` dengan Resend/SMTP.
 - **Unggahan berkas sungguhan.** Berkas dipilih dan divalidasi di klien, lalu
   parsing-nya disimulasikan; berkasnya sendiri tidak dikirim ke server.
-- **Moderasi katalog.** Soal publik langsung tampil tanpa peninjauan.
-- **Pembatasan laju.** Belum ada rate limit pada pembuatan aktivitas maupun
-  penyimpanan hasil — perlu ditambahkan sebelum dibuka untuk umum.
+- **Peninjauan sebelum tayang.** Soal publik langsung tampil di katalog; moderasi
+  berjalan setelahnya, lewat laporan dan halaman admin.
+- **Pembatasan laju yang menyeluruh.** Masuk admin dan pengiriman laporan sudah
+  dibatasi, tetapi pembuatan aktivitas dan penyimpanan hasil peserta belum.
+  Hitungannya juga disimpan di memori proses (`src/lib/admin/laju.ts`), jadi kalau
+  aplikasi berjalan di banyak instans, batasnya terpisah per instans — untuk itu
+  perlu penyimpanan bersama.
 
 Lihat `project/blueprint.md` §11 untuk rencana rilis.
 
