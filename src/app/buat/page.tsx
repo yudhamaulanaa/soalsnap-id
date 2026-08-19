@@ -6,6 +6,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { DokumenIcon, PanahKananIcon, PensilIcon, SilangIcon, UnggahIcon } from "@/components/Icons";
 import { formatUkuran } from "@/lib/format";
 import { useStore } from "@/lib/store";
+import { unggahBerkas } from "@/lib/unggah/klien";
 import { MAX_FILE_MB, MAX_PAGES_PER_UPLOAD, type UploadFileRef } from "@/lib/types";
 
 const TERIMA = ".jpg,.jpeg,.png,.pdf,.docx,image/*,application/pdf";
@@ -24,6 +25,7 @@ export default function UnggahPage() {
   const draft = useStore((s) => s.draft);
   const tambahFile = useStore((s) => s.tambahFile);
   const hapusFile = useStore((s) => s.hapusFile);
+  const catatUnggahan = useStore((s) => s.catatUnggahan);
   const mulaiManual = useStore((s) => s.mulaiManual);
 
   const files = draft?.origin === "upload" ? draft.files : [];
@@ -31,9 +33,17 @@ export default function UnggahPage() {
   const [tempelTerbuka, setTempelTerbuka] = useState(false);
   const [teks, setTeks] = useState("");
   const [seret, setSeret] = useState(false);
+  const [mengunggah, setMengunggah] = useState(false);
+  const [kemajuan, setKemajuan] = useState<Record<string, number>>({});
 
   const inputFile = useRef<HTMLInputElement>(null);
   const inputKamera = useRef<HTMLInputElement>(null);
+
+  /**
+   * Isi berkasnya hanya hidup selama halaman ini terbuka — daftar di store
+   * ikut tersimpan di localStorage, sedangkan objek File tidak bisa.
+   */
+  const isiBerkas = useRef(new Map<string, File>());
 
   function terimaFiles(list: FileList | null) {
     if (!list || list.length === 0) return;
@@ -45,8 +55,10 @@ export default function UnggahPage() {
         tolak.push(`${f.name} melebihi ${MAX_FILE_MB} MB`);
         continue;
       }
+      const id = `${f.name}-${f.size}-${f.lastModified}`;
+      isiBerkas.current.set(id, f);
       masuk.push({
-        id: `${f.name}-${f.size}-${f.lastModified}`,
+        id,
         name: f.name,
         size: formatUkuran(f.size),
         kind: kindOf(f.name),
@@ -69,9 +81,12 @@ export default function UnggahPage() {
     const isi = teks.trim();
     if (!isi) return;
     const baris = isi.split("\n").filter(Boolean).length;
+    const id = `teks-${Date.now()}`;
+    // Teks tempelan diperlakukan sama seperti berkas lain supaya ikut terunggah.
+    isiBerkas.current.set(id, new File([isi], "soal-tempel.txt", { type: "text/plain" }));
     tambahFile([
       {
-        id: `teks-${Date.now()}`,
+        id,
         name: "soal-tempel.txt",
         size: `teks · ${baris} baris`,
         kind: "text",
@@ -81,6 +96,32 @@ export default function UnggahPage() {
     setTeks("");
     setTempelTerbuka(false);
     setError(null);
+  }
+
+  async function prosesDenganAI() {
+    if (mengunggah) return;
+
+    const daftar = files.map((f) => ({ id: f.id, file: isiBerkas.current.get(f.id) }));
+    const hilang = daftar.filter((d) => !d.file);
+    if (hilang.length > 0) {
+      setError("Berkasnya perlu dipilih ulang — isinya tidak ikut tersimpan saat halaman dimuat ulang.");
+      return;
+    }
+
+    setMengunggah(true);
+    setError(null);
+    setKemajuan({});
+    try {
+      const { token } = await unggahBerkas(
+        daftar.map((d) => ({ id: d.id, file: d.file! })),
+        { onKemajuan: (id, persen) => setKemajuan((k) => ({ ...k, [id]: persen })) },
+      );
+      catatUnggahan(token);
+      router.push("/buat/proses");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Gagal mengunggah berkas");
+      setMengunggah(false);
+    }
   }
 
   /** FR-UP-7: klik kontrol di dalam dropzone tidak boleh membuka pemilih file. */
@@ -277,14 +318,16 @@ export default function UnggahPage() {
                   <div className="text-xs text-ink-3">{f.size}</div>
                 </div>
                 <span className="rounded-full bg-teal-light px-3 py-1 text-xs font-bold text-teal-dark">
-                  Siap
+                  {mengunggah ? `${kemajuan[f.id] ?? 0}%` : "Siap"}
                 </span>
                 {/* Menghapus baris tidak memicu aksi lain pada area unggah (FR-UP-3). */}
                 <button
                   type="button"
                   aria-label={`Hapus ${f.name}`}
+                  disabled={mengunggah}
                   onClick={(e) => {
                     e.stopPropagation();
+                    isiBerkas.current.delete(f.id);
                     hapusFile(f.id);
                   }}
                   className="grid h-[30px] w-[30px] place-items-center rounded-lg text-dim-2 transition-colors hover:bg-wrong-bg hover:text-wrong"
@@ -296,10 +339,11 @@ export default function UnggahPage() {
 
             <button
               type="button"
-              onClick={() => router.push("/buat/proses")}
-              className="mt-1.5 flex items-center gap-2.5 self-end rounded-full bg-teal px-7 py-3.5 font-display text-base font-bold text-surface transition-all hover:-translate-y-0.5 hover:bg-teal-dark"
+              disabled={mengunggah}
+              onClick={prosesDenganAI}
+              className="mt-1.5 flex items-center gap-2.5 self-end rounded-full bg-teal px-7 py-3.5 font-display text-base font-bold text-surface transition-all hover:-translate-y-0.5 hover:bg-teal-dark disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-dim"
             >
-              Proses {files.length} file dengan AI
+              {mengunggah ? "Mengunggah…" : `Proses ${files.length} file dengan AI`}
               <PanahKananIcon size={17} />
             </button>
           </div>

@@ -123,6 +123,11 @@ export interface Draft {
   files: UploadFileRef[];
   questions: Question[];
   sourcePages?: SourcePage[];
+  /**
+   * Token job pemrosesan setelah berkasnya terunggah. Tanpa akun, token inilah
+   * izin memantau antrean dan mengambil hasilnya.
+   */
+  token?: string;
   /** Soal yang sedang dalam mode edit di layar Review (FR-RV-3, FR-RV-7). */
   editingId?: string | null;
 }

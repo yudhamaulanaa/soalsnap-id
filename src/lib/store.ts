@@ -47,6 +47,7 @@ interface Actions {
   // — Alur unggah —
   tambahFile: (files: UploadFileRef[]) => void;
   hapusFile: (id: string) => void;
+  catatUnggahan: (token: string) => void;
   simpanHasilAI: (questions: Question[], sourcePages: SourcePage[]) => void;
   mulaiManual: () => void;
   buangDraft: () => void;
@@ -85,6 +86,9 @@ export const useStore = create<Store>()(
           const baru = files.filter((f) => !known.has(f.name));
           return { draft: { ...draft, origin: "upload", files: [...draft.files, ...baru] } };
         }),
+
+      catatUnggahan: (token) =>
+        set((s) => (s.draft ? { draft: { ...s.draft, token } } : s)),
 
       hapusFile: (id) =>
         set((s) =>

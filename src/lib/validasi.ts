@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { KELAS, MAPEL } from "./kategori";
 import { ALASAN_IDS } from "./laporan";
+import { MAX_BERKAS, MAX_UKURAN_BYTE } from "./unggah/berkas";
 import { TEMPLATES } from "./templates";
 import { TIMER_MAX, TIMER_MIN } from "./types";
 
@@ -69,6 +70,20 @@ export const katalogQuerySchema = z.object({
 export const laporanSchema = z.object({
   alasan: z.enum(ALASAN_IDS),
   catatan: z.string().trim().max(500).optional(),
+});
+
+/** Permintaan izin unggah; isinya baru metadata, berkasnya menyusul ke R2. */
+export const unggahSchema = z.object({
+  berkas: z
+    .array(
+      z.object({
+        nama: z.string().trim().min(1).max(200),
+        contentType: z.string().trim().min(1).max(120),
+        ukuran: z.number().int().min(1).max(MAX_UKURAN_BYTE),
+      }),
+    )
+    .min(1)
+    .max(MAX_BERKAS),
 });
 
 export const masukAdminSchema = z.object({

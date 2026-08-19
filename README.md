@@ -61,7 +61,7 @@ mencoba tanpa hasilnya ikut tercatat.
 
 SQLite lewat Prisma 7 (`prisma/schema.prisma`): tiga tabel sesuai `frd.md` §8 —
 `Activity`, `Question`, `PlaySession` — ditambah `Report` untuk antrean laporan
-konten. Pindah ke Postgres cukup mengganti `provider` beserta adapter-nya — skema
+konten serta `ParseJob`/`Upload` untuk antrean pemrosesan dokumen. Pindah ke Postgres cukup mengganti `provider` beserta adapter-nya — skema
 dan kueri tidak berubah.
 
 **Catatan penilaian.** Sama seperti prototype, penilaian dihitung di peramban,
@@ -158,16 +158,52 @@ Susun Kata dan Cari Kata. Mengganti template tidak pernah mengubah soal.
 Template yang syarat datanya tidak terpenuhi tampil nonaktif beserta alasannya, bukan
 gagal senyap (FR-TP-6).
 
+## Unggahan berkas & antrean pemrosesan
+
+Berkas diunggah **peramban langsung ke Cloudflare R2**, tidak melewati server
+aplikasi. Server hanya menandatangani izin unggah lalu memeriksa hasilnya:
+
+1. `POST /api/unggah` — memvalidasi metadata (jenis, ukuran, jumlah), membuka
+   satu `ParseJob`, dan mengembalikan URL `PUT` bertanda tangan per berkas.
+2. Peramban mengunggah tiap berkas ke R2 (`src/lib/unggah/klien.ts`, memakai XHR
+   agar kemajuannya terlihat).
+3. `POST /api/unggah/[token]/mulai` — server memastikan objeknya benar ada di R2,
+   membaca **ukuran sebenarnya**, menghitung **jumlah halaman PDF sungguhan**
+   dengan `pdf-lib`, menegakkan batas 20 halaman, lalu memasukkan job ke antrean.
+4. `GET /api/unggah/[token]` — status untuk layar Proses AI.
+
+Laporan klien tidak dipercaya di langkah 3: yang dipegangnya hanya izin unggah,
+bukan wewenang menyatakan isi. Job yang ditolak menghapus kembali berkasnya dari
+R2 supaya tidak ada objek menganggur.
+
+| Variabel | Kegunaan |
+|---|---|
+| `R2_ACCOUNT_ID` | akun Cloudflare; membentuk endpoint `<akun>.r2.cloudflarestorage.com` |
+| `R2_BUCKET` | nama bucket |
+| `R2_ACCESS_KEY_ID` · `R2_SECRET_ACCESS_KEY` | token API R2 |
+| `R2_ENDPOINT` | opsional; menimpa endpoint untuk jurisdiksi khusus atau server tiruan saat uji |
+
+Bucket-nya perlu **CORS** yang mengizinkan `PUT` dari asal aplikasi, karena
+peramban mengunggah langsung ke sana.
+
+**Antrean.** `ParseJob` adalah antrean di basis data: job masuk berstatus `antre`,
+dan kolom `workerId`/`klaimAt` disediakan supaya worker bisa mengklaim satu job
+secara atomik — beberapa worker boleh berjalan paralel tanpa mengerjakan job yang
+sama. Di Postgres nanti pakai `FOR UPDATE SKIP LOCKED`; di SQLite satu `UPDATE …
+RETURNING` sudah atomik di bawah kunci tulisnya.
+
 ## Pemrosesan AI
 
-Parsing dokumen **disimulasikan**: `src/lib/ai/mockParser.ts` memajukan progres
-bertahap lalu mengembalikan bank soal contoh, lengkap dengan skor keyakinan dan tanda
-"perlu diperiksa" untuk soal di bawah ambang 80 (FR-AI-5).
+Berkasnya kini sungguhan tersimpan dan job-nya masuk antrean, **tetapi belum ada
+worker yang mengambilnya**: job berhenti di status `antre`, dan layar Proses AI
+masih memakai simulasi `src/lib/ai/mockParser.ts` — progres bertahap lalu bank soal
+contoh, lengkap dengan skor keyakinan dan tanda "perlu diperiksa" di bawah ambang 80
+(FR-AI-5).
 
 Kontraknya dipisah di `src/lib/ai/parser.ts` (`QuestionParser`, `validateQuestions`,
-`STAGES`). Untuk memakai model vision sungguhan, tukar implementasi parser tersebut —
-sisa aplikasi tidak perlu berubah. Tidak ada hasil AI yang bisa melewati layar Review
-(FR-AI-8).
+`STAGES`). Worker sungguhan tinggal membaca berkas job dari R2, menjalankan OCR dan
+perapian teks, lalu menulis hasilnya ke `ParseJob.hasil`. Tidak ada hasil AI yang
+bisa melewati layar Review (FR-AI-8).
 
 ## Struktur
 
@@ -178,6 +214,7 @@ src/app/api/        route handler: aktivitas, main, sesi peserta
 src/components/     komponen bersama; components/play/ berisi 5 mode main
 src/lib/            tipe, akses basis data, validasi, turunan bank soal, parser AI
 src/lib/email/      penyusunan & pengiriman surel tautan
+src/lib/unggah/     aturan berkas, hitung halaman, dan alur unggah di peramban
 src/lib/admin/      sesi admin, pembatas laju, kueri audit
 src/lib/__tests__/  tes logika permainan & validasi API
 ```
@@ -191,8 +228,8 @@ peramban ini (`src/lib/store.ts`).
 
 ## Yang belum ada
 
-- **Unggahan berkas sungguhan.** Berkas dipilih dan divalidasi di klien, lalu
-  parsing-nya disimulasikan; berkasnya sendiri tidak dikirim ke server.
+- **Worker pemroses.** Berkas sudah tersimpan di R2 dan job sudah mengantre, tetapi
+  belum ada worker yang mengambil antrean; hasil soalnya masih dari simulasi.
 - **Peninjauan sebelum tayang.** Soal publik langsung tampil di katalog; moderasi
   berjalan setelahnya, lewat laporan dan halaman admin.
 - **Pembatasan laju yang menyeluruh.** Masuk admin dan pengiriman laporan sudah
