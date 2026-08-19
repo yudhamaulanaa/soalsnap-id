@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { KELAS, MAPEL } from "./kategori";
+import { ALASAN_IDS } from "./laporan";
 import { TEMPLATES } from "./templates";
 import { TIMER_MAX, TIMER_MIN } from "./types";
 
@@ -63,6 +64,43 @@ export const katalogQuerySchema = z.object({
   mapel: z.enum(MAPEL).optional(),
   q: z.string().trim().max(100).optional(),
   halaman: z.coerce.number().int().min(1).max(200).default(1),
+});
+
+export const laporanSchema = z.object({
+  alasan: z.enum(ALASAN_IDS),
+  catatan: z.string().trim().max(500).optional(),
+});
+
+export const masukAdminSchema = z.object({
+  sandi: z.string().min(1).max(200),
+});
+
+/** Aksi moderasi admin atas satu aktivitas. */
+export const moderasiSchema = z.object({
+  aksi: z.enum(["turunkan", "pulihkan"]),
+  alasan: z.string().trim().max(200).optional(),
+});
+
+export const tinjauLaporanSchema = z.object({
+  status: z.enum(["ditangani", "diabaikan"]),
+});
+
+/**
+ * Kolom form yang dikosongkan terkirim sebagai string kosong, dan tanpa ini
+ * satu pilihan "Semua" akan menggugurkan seluruh filter — termasuk kata kunci
+ * yang baru saja diketik.
+ */
+const kosongBerarti = <T extends z.ZodType>(skema: T) =>
+  z.preprocess((v) => (v === "" ? undefined : v), skema.optional());
+
+export const adminQuerySchema = z.object({
+  q: z.string().trim().max(100).optional(),
+  visibility: kosongBerarti(z.enum(["private", "public"])),
+  dilaporkan: kosongBerarti(z.enum(["ya"])),
+  halaman: z.preprocess(
+    (v) => (v === "" || v === undefined ? 1 : v),
+    z.coerce.number().int().min(1).max(500),
+  ),
 });
 
 /** Pesan ringkas untuk ditampilkan ke pengguna. */

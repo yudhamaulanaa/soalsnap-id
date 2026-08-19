@@ -18,7 +18,7 @@ import type {
 
 const TEMPLATE_IDS = new Set(TEMPLATES.map((t) => t.id as string));
 
-function templateOf(v: string): TemplateId {
+export function templateOf(v: string): TemplateId {
   return (TEMPLATE_IDS.has(v) ? v : "kuis") as TemplateId;
 }
 

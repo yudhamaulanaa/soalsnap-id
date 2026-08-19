@@ -42,12 +42,17 @@ model Activity {
   linkSentTo String?
   linkSentAt DateTime?
 
+  /// Jejak moderasi: diisi saat admin menurunkan aktivitas dari katalog.
+  takedownAt     DateTime?
+  takedownAlasan String?
+
   plays     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   questions Question[]
   sessions  PlaySession[]
+  reports   Report[]
 
   @@index([visibility, kelas, mapel])
   @@index([visibility, createdAt])
@@ -96,4 +101,27 @@ model PlaySession {
 
   @@index([activityId, score])
   @@index([activityId, createdAt])
+}
+
+/// Laporan konten dari peserta atau guru lain — antrean tinjauan admin.
+model Report {
+  id         String   @id @default(cuid())
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  /// Salah satu alasan baku di src/lib/laporan.ts.
+  alasan String
+  /// Keterangan bebas dari pelapor.
+  catatan String?
+  /// Sidik pelapor (hash), hanya untuk membatasi laporan berulang — bukan identitas.
+  pelapor String?
+
+  /// "baru" | "ditangani" | "diabaikan"
+  status    String    @default("baru")
+  createdAt DateTime  @default(now())
+  /// Kapan admin menutup laporan ini.
+  selesaiAt DateTime?
+
+  @@index([status, createdAt])
+  @@index([activityId])
 }

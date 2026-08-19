@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { PlayShell } from "@/components/play/PlayShell";
 import { MainIcon } from "@/components/Icons";
+import { TombolLapor } from "@/components/TombolLapor";
 import { eligibility, templateCount, templateLabel } from "@/lib/templates";
 import type { Activity } from "@/lib/types";
 
@@ -100,46 +101,51 @@ function Sambutan({
 
   return (
     <Latar>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          onMulai();
-        }}
-        className="flex w-full max-w-[520px] animate-popin flex-col items-center gap-4 rounded-[28px] bg-surface px-9 py-11 text-center"
-      >
-        <span className="rounded-full bg-ai-light px-3.5 py-[5px] text-xs font-bold text-ai-dark">
-          {templateLabel(activity.template)} · {jumlah} soal
-        </span>
-        <h1 className="m-0 font-display text-[28px] font-extrabold leading-[1.2] text-pretty">
-          {activity.title}
-        </h1>
-        <p className="m-0 text-[15px] text-ink-3">
-          Tulis namamu supaya nilaimu muncul di papan skor — boleh juga dikosongkan.
-        </p>
-
-        <input
-          value={nama}
-          onChange={(e) => onNama(e.target.value)}
-          maxLength={60}
-          placeholder="Nama kamu (opsional)"
-          aria-label="Nama peserta"
-          className="w-full rounded-[14px] border-2 border-line px-[18px] py-[15px] text-center text-[17px] font-semibold outline-none focus:border-teal"
-        />
-
-        <button
-          type="submit"
-          className="flex w-full items-center justify-center gap-2.5 rounded-[14px] bg-teal px-6 py-[15px] font-display text-base font-bold text-surface transition-colors hover:bg-teal-dark"
+      <div className="flex w-full flex-col items-center gap-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onMulai();
+          }}
+          className="flex w-full max-w-[520px] animate-popin flex-col items-center gap-4 rounded-[28px] bg-surface px-9 py-11 text-center"
         >
-          <MainIcon size={16} />
-          {nama.trim() ? "Mulai mengerjakan" : "Mulai sebagai Anonim"}
-        </button>
-
-        {pratinjau && (
-          <p className="m-0 text-[12.5px] font-semibold text-dim">
-            Mode pratinjau — hasilmu tidak akan tercatat.
+          <span className="rounded-full bg-ai-light px-3.5 py-[5px] text-xs font-bold text-ai-dark">
+            {templateLabel(activity.template)} · {jumlah} soal
+          </span>
+          <h1 className="m-0 font-display text-[28px] font-extrabold leading-[1.2] text-pretty">
+            {activity.title}
+          </h1>
+          <p className="m-0 text-[15px] text-ink-3">
+            Tulis namamu supaya nilaimu muncul di papan skor — boleh juga dikosongkan.
           </p>
-        )}
-      </form>
+
+          <input
+            value={nama}
+            onChange={(e) => onNama(e.target.value)}
+            maxLength={60}
+            placeholder="Nama kamu (opsional)"
+            aria-label="Nama peserta"
+            className="w-full rounded-[14px] border-2 border-line px-[18px] py-[15px] text-center text-[17px] font-semibold outline-none focus:border-teal"
+          />
+
+          <button
+            type="submit"
+            className="flex w-full items-center justify-center gap-2.5 rounded-[14px] bg-teal px-6 py-[15px] font-display text-base font-bold text-surface transition-colors hover:bg-teal-dark"
+          >
+            <MainIcon size={16} />
+            {nama.trim() ? "Mulai mengerjakan" : "Mulai sebagai Anonim"}
+          </button>
+
+          {pratinjau && (
+            <p className="m-0 text-[12.5px] font-semibold text-dim">
+              Mode pratinjau — hasilmu tidak akan tercatat.
+            </p>
+          )}
+        </form>
+
+        {/* Siapa pun yang melihat soal ini bisa menandainya untuk ditinjau admin. */}
+        <TombolLapor playSlug={activity.playSlug} />
+      </div>
     </Latar>
   );
 }
