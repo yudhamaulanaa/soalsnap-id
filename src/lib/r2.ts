@@ -99,6 +99,24 @@ export async function periksaObjek(key: string): Promise<Objek> {
   }
 }
 
+export interface ObjekPenuh {
+  isi: Uint8Array;
+  contentType: string;
+}
+
+/** Isi beserta tipenya — dipakai rute penyaji gambar soal. */
+export async function ambilObjekPenuh(key: string): Promise<ObjekPenuh | null> {
+  const { klien, bucket } = klienR2();
+  try {
+    const hasil = await klien.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+    const isi = await hasil.Body?.transformToByteArray();
+    if (!isi) return null;
+    return { isi, contentType: hasil.ContentType ?? "application/octet-stream" };
+  } catch {
+    return null;
+  }
+}
+
 export async function ambilObjek(key: string): Promise<Uint8Array | null> {
   const { klien, bucket } = klienR2();
   try {

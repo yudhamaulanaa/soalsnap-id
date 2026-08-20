@@ -118,8 +118,8 @@ diperiksa. Yang bisa dilakukan:
 
 - menelusuri semua aktivitas, dicari per judul dan disaring per status atau
   "hanya yang dilaporkan";
-- membaca seluruh soal, kunci, catatan keyakinan AI, kontak pembuat, dan rekap
-  peserta satu aktivitas;
+- membaca seluruh soal beserta **gambarnya**, kunci, catatan keyakinan AI, kontak
+  pembuat, dan rekap peserta satu aktivitas;
 - **menurunkan** aktivitas dari katalog (jadi privat, dengan alasan tercatat),
   **memulihkannya**, atau **menghapusnya** beserta soal dan rekapnya;
 - menutup laporan yang masuk sebagai "ditangani" atau "diabaikan".
@@ -148,6 +148,41 @@ semata-mata untuk dua hal: laporan berulang atas aktivitas yang sama tidak
 menumpuk di antrean, dan pengiriman dibatasi 5 laporan per jam per pemanggil.
 Nilainya tidak bisa dikembalikan menjadi alamat IP dan tidak ditampilkan di
 halaman admin.
+
+## Soal bergambar
+
+Satu soal boleh membawa satu gambar — misalnya diagram yang pertanyaannya merujuk
+ke situ. Gambar disimpan di R2 pada ruang nama tersendiri (`soal/…`), terpisah dari
+dokumen unggahan (`unggahan/…`), dan `Question.gambar` menyimpan kuncinya.
+
+Pemisahan ruang nama itu bukan kerapian belaka: rute penyaji hanya melayani prefiks
+`soal/`, sehingga kunci karangan tidak bisa dipakai membaca dokumen sumber milik
+orang lain. Kunci juga ditentukan server, bukan klien, supaya gambar milik soal lain
+tidak bisa ditimpa — dan validasi `soalSchema` menolak kunci di luar ruang nama itu.
+
+**Disajikan lewat proxy, bukan bucket publik.** `GET /api/gambar/[…kunci]`
+menyalurkan gambar dari R2, dan itu keputusan yang disengaja: dengan URL bucket
+publik, menurunkan aktivitas dari katalog tidak akan menghentikan gambarnya
+tersaji. Lewat proxy, gambar berhenti dilayani begitu **seluruh** soal yang
+memakainya berada di aktivitas yang diturunkan admin.
+
+Dua perilaku yang menyertainya:
+
+- **Admin tetap dilayani.** Kalau gambar konten yang diturunkan ikut hilang dari
+  halaman audit, moderasinya jadi buta persis pada konten yang paling perlu
+  diperiksa. Sesi admin karenanya menembus penjaga itu, dengan `Cache-Control:
+  no-store` supaya tidak mengendap di cache bersama.
+- **Cache pendek** (60 detik) untuk gambar yang masih tayang. Itulah jeda maksimum
+  antara admin menurunkan konten dan gambarnya berhenti tampil di peramban yang
+  sudah memuatnya.
+
+Gambar yang belum dipakai soal mana pun tetap dilayani — itu draft yang sedang
+disusun guru di layar Review. Saat aktivitas dihapus (oleh pemiliknya maupun admin),
+gambarnya ikut disapu dari R2, tetapi hanya yang benar-benar tidak dipakai soal lain.
+
+Teks alternatif (`gambarAlt`) bisa diisi guru di layar Review; tanpa itu pembaca
+layar tetap diberi tahu bahwa ada gambar, karena soal bergambar sering tidak bisa
+dijawab tanpa melihatnya.
 
 ## Delapan template, satu bank soal
 
@@ -230,6 +265,9 @@ peramban ini (`src/lib/store.ts`).
 
 - **Worker pemroses.** Berkas sudah tersimpan di R2 dan job sudah mengantre, tetapi
   belum ada worker yang mengambil antrean; hasil soalnya masih dari simulasi.
+- **Pemotongan gambar otomatis.** Guru menambahkan gambar soal sendiri di layar
+  Review; memotong gambar dari halaman dokumen sumber dan menentukan gambar itu
+  milik soal nomor berapa adalah pekerjaan worker, dan belum ada.
 - **Peninjauan sebelum tayang.** Soal publik langsung tampil di katalog; moderasi
   berjalan setelahnya, lewat laporan dan halaman admin.
 - **Pembatasan laju yang menyeluruh.** Masuk admin dan pengiriman laporan sudah

@@ -76,6 +76,12 @@ model Question {
   /// Kunci jawaban teks untuk isian.
   kunci String?
 
+  /// Kunci objek gambar soal di R2 (selalu berprefiks "soal/"); null berarti
+  /// soal ini murni teks.
+  gambar    String?
+  /// Teks alternatif gambar, untuk pembaca layar dan saat gambar gagal dimuat.
+  gambarAlt String?
+
   conf   Int     @default(100)
   low    Boolean @default(false)
   note   String?

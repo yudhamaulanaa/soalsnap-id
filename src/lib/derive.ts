@@ -84,6 +84,9 @@ export function buildWords(questions: readonly Question[], limit = 4): WordItem[
 export interface Card {
   front: string;
   back: string;
+  /** Gambar soal ikut ke sisi depan kartu bila ada. */
+  gambar?: string;
+  gambarAlt?: string;
 }
 
 /** Flashcard: teks soal di depan, kunci di belakang (blueprint.md §6). */
@@ -91,6 +94,8 @@ export function buildCards(questions: readonly Question[]): Card[] {
   return questions.map((q) => ({
     front: q.q.replace(/_{2,}/g, "…"),
     back: answerOf(q) || "—",
+    gambar: q.gambar,
+    gambarAlt: q.gambarAlt,
   }));
 }
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { asalAplikasi } from "@/lib/asal";
 import { prisma } from "@/lib/db";
 import { kirimTautanKePembuat } from "@/lib/email/kirim";
+import { sapuGambar } from "@/lib/unggah/sapu";
 import { aktivitasDari, sesiDari, soalKeBaris } from "@/lib/serialize";
 import { pesanValidasi, ubahAktivitasSchema } from "@/lib/validasi";
 import type { Question } from "@/lib/types";
@@ -98,10 +99,17 @@ export async function PATCH(request: Request, { params }: Ctx) {
 /** DELETE /api/activities/[editSlug] — pemilik menghapus soalnya. */
 export async function DELETE(_request: Request, { params }: Ctx) {
   const { editSlug } = await params;
-  const ada = await prisma.activity.findUnique({ where: { editSlug }, select: { id: true } });
+  const ada = await prisma.activity.findUnique({
+    where: { editSlug },
+    select: { id: true, questions: { select: { gambar: true } } },
+  });
   if (!ada) {
     return NextResponse.json({ error: "Aktivitas tidak ditemukan" }, { status: 404 });
   }
+
   await prisma.activity.delete({ where: { id: ada.id } });
+  // Setelah barisnya hilang, gambarnya tidak boleh tertinggal di penyimpanan.
+  await sapuGambar(ada.questions.map((q) => q.gambar));
+
   return NextResponse.json({ ok: true });
 }

@@ -10,6 +10,14 @@ import {
   periksaTotalHalaman,
   tipeBerkas,
 } from "../unggah/berkas";
+import {
+  MAX_GAMBAR_BYTE,
+  jenisGambarSah,
+  kunciGambar,
+  kunciGambarSah,
+  periksaGambar,
+  urlGambar,
+} from "../unggah/gambar";
 
 const pdf = { nama: "soal.pdf", contentType: "application/pdf", ukuran: 1024 };
 
@@ -104,5 +112,50 @@ describe("batas halaman", () => {
     const hasil = periksaTotalHalaman([18, 5]);
     expect(hasil.ok).toBe(false);
     expect(hasil.ok === false && hasil.alasan).toContain("23");
+  });
+});
+
+describe("gambar soal", () => {
+  it("hanya menerima kunci di ruang nama gambar soal", () => {
+    expect(kunciGambarSah("soal/a1b2c3.png")).toBe(true);
+    expect(kunciGambarSah("soal/GAMBAR-01_v2.webp")).toBe(true);
+  });
+
+  it("menolak kunci yang menjangkau dokumen unggahan", () => {
+    expect(kunciGambarSah("unggahan/job123/00-soal.pdf")).toBe(false);
+    expect(kunciGambarSah("soal/../unggahan/job123/00-soal.pdf")).toBe(false);
+    expect(kunciGambarSah("soal/sub/berkas.png")).toBe(false);
+    expect(kunciGambarSah("/soal/a.png")).toBe(false);
+    expect(kunciGambarSah("soal/")).toBe(false);
+    expect(kunciGambarSah("")).toBe(false);
+  });
+
+  it("menolak kunci yang kepanjangan", () => {
+    expect(kunciGambarSah(`soal/${"a".repeat(120)}`)).toBe(true);
+    expect(kunciGambarSah(`soal/${"a".repeat(121)}`)).toBe(false);
+  });
+
+  it("hanya menerima format gambar yang wajar", () => {
+    expect(jenisGambarSah("image/png")).toBe(true);
+    expect(jenisGambarSah("IMAGE/JPEG; charset=binary")).toBe(true);
+    expect(jenisGambarSah("image/svg+xml")).toBe(false);
+    expect(jenisGambarSah("application/pdf")).toBe(false);
+  });
+
+  it("menyusun kunci yang selalu sah dari masukan apa pun", () => {
+    expect(kunciGambar("abc123", "image/png")).toBe("soal/abc123.png");
+    expect(kunciGambar("../../jahat", "image/jpeg")).toBe("soal/jahat.jpg");
+    expect(kunciGambarSah(kunciGambar("!!!", "image/webp"))).toBe(true);
+  });
+
+  it("menegakkan jenis dan ukuran gambar", () => {
+    expect(periksaGambar("image/png", 1024).ok).toBe(true);
+    expect(periksaGambar("image/gif", 1024).ok).toBe(false);
+    expect(periksaGambar("image/png", 0).ok).toBe(false);
+    expect(periksaGambar("image/png", MAX_GAMBAR_BYTE + 1).ok).toBe(false);
+  });
+
+  it("menyajikan gambar lewat rute proxy, bukan URL bucket", () => {
+    expect(urlGambar("soal/a1b2.png")).toBe("/api/gambar/soal/a1b2.png");
   });
 });

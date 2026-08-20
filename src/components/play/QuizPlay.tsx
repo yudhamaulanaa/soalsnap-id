@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { isianBenar, shuffle } from "@/lib/derive";
 import { TIMER_KUIS_CEPAT, type Question } from "@/lib/types";
 import type { ModeProps } from "./types";
+import { GambarSoal } from "../GambarSoal";
 
 type Hasil = "benar" | "salah" | "habis" | null;
 
@@ -123,6 +124,8 @@ export function QuizPlay({ questions, activity, report }: ModeProps) {
         <span className="self-start rounded-full bg-ai-light px-3.5 py-[5px] text-xs font-bold text-ai-dark">
           {BADGE[soal.type]}
         </span>
+
+        {soal.gambar && <GambarSoal kunci={soal.gambar} alt={soal.gambarAlt} />}
 
         <h2 className="m-0 font-display text-[26px] font-bold leading-[1.35] text-pretty">
           {soal.q}

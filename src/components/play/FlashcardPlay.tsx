@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { buildCards, shuffle } from "@/lib/derive";
 import type { ModeProps } from "./types";
+import { GambarSoal } from "../GambarSoal";
 
 /** Page 08 — Flashcard (FR-PL-5). */
 export function FlashcardPlay({ questions, activity, report }: ModeProps) {
@@ -61,6 +62,9 @@ export function FlashcardPlay({ questions, activity, report }: ModeProps) {
         >
           {belakang ? "JAWABAN" : "PERTANYAAN"}
         </span>
+        {!belakang && kartu.gambar && (
+          <GambarSoal kunci={kartu.gambar} alt={kartu.gambarAlt} className="max-h-[200px]" />
+        )}
         <span className="font-display text-[26px] font-bold leading-[1.4] text-pretty">
           {belakang ? kartu.back : kartu.front}
         </span>

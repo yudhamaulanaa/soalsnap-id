@@ -1,6 +1,7 @@
 "use client";
 
 import { tipeBerkas } from "./berkas";
+import { periksaGambar } from "./gambar";
 
 /**
  * Alur unggah di sisi peramban: minta izin, kirim berkas langsung ke R2,
@@ -101,4 +102,37 @@ function kirimSatu(berkas: BerkasUnggah, url: string, opsi: OpsiUnggah): Promise
     opsi.signal?.addEventListener("abort", batalkan);
     xhr.send(berkas.file);
   });
+}
+
+/**
+ * Unggah satu gambar soal. Berbeda dari dokumen sumber, gambar soal tidak
+ * bergabung dengan job pemrosesan — ia langsung menempel pada soalnya.
+ */
+export async function unggahGambar(file: File): Promise<{ kunci: string }> {
+  const contentType = tipeBerkas(file.name, file.type);
+
+  // Ditolak lebih awal supaya pengguna tidak menunggu perjalanan bolak-balik.
+  const awal = periksaGambar(contentType, file.size);
+  if (!awal.ok) throw new Error(awal.alasan);
+
+  const res = await fetch("/api/gambar", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ contentType, ukuran: file.size }),
+  });
+  const data: { kunci?: string; url?: string; error?: string } = await res
+    .json()
+    .catch(() => ({}));
+  if (!res.ok || !data.kunci || !data.url) {
+    throw new Error(data.error ?? "Gagal menyiapkan unggahan gambar");
+  }
+
+  const put = await fetch(data.url, {
+    method: "PUT",
+    headers: { "Content-Type": contentType },
+    body: file,
+  });
+  if (!put.ok) throw new Error("Gambar gagal diunggah");
+
+  return { kunci: data.kunci };
 }

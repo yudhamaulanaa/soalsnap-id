@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { AksiLaporan } from "@/components/admin/AksiLaporan";
 import { AksiModerasi } from "@/components/admin/AksiModerasi";
 import { StatusBadge } from "@/components/admin/StatusBadge";
+import { GambarSoal } from "@/components/GambarSoal";
 import { aktivitasLengkap } from "@/lib/admin/data";
 import { pastikanAdmin } from "@/lib/admin/sesi";
 import { formatWaktu } from "@/lib/format";
@@ -201,6 +202,10 @@ function KartuSoal({ nomor, soal }: { nomor: number; soal: Question }) {
       </div>
 
       <p className="m-0 font-display text-[16px] font-bold text-pretty">{soal.q}</p>
+
+      {/* Gambar ikut ditinjau: soal bergambar bisa disalahgunakan justru lewat
+          gambarnya, dan audit yang hanya membaca teks tidak akan melihatnya. */}
+      {soal.gambar && <GambarSoal kunci={soal.gambar} alt={soal.gambarAlt} className="mt-3" />}
 
       {soal.opts && soal.opts.length > 0 && (
         <ul className="m-0 mt-3 flex list-none flex-col gap-1.5 p-0">
