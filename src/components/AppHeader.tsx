@@ -18,8 +18,11 @@ export function AppHeader({ step }: Props) {
     // Tinggi 64px sudah termasuk garis bawah (border-box), sama seperti desain.
     <header className="sticky top-0 z-50 h-16 border-b border-line bg-surface">
       {/* Isi header melebar penuh dengan padding 24px, seperti berkas desain. */}
-      <div className="flex h-full items-center gap-4 px-6">
-        <Link href="/" className="flex items-center gap-2.5 no-underline hover:no-underline">
+      <div className="flex h-full items-center gap-1.5 px-3 sm:gap-4 sm:px-6">
+        <Link
+          href="/"
+          className="flex shrink-0 items-center gap-2.5 no-underline hover:no-underline"
+        >
           <span className="grid h-[34px] w-[34px] place-items-center rounded-[11px] bg-teal text-surface">
             <KameraIcon size={18} />
           </span>
@@ -35,15 +38,17 @@ export function AppHeader({ step }: Props) {
         {inFlow ? (
           <Link
             href="/dashboard"
-            className="rounded-full border border-line px-[18px] py-[9px] text-sm font-semibold text-ink-3 no-underline transition-colors hover:border-line-hover hover:text-ink hover:no-underline"
+            className="shrink-0 rounded-full border border-line px-[18px] py-[9px] text-sm font-semibold text-ink-3 no-underline transition-colors hover:border-line-hover hover:text-ink hover:no-underline"
           >
             Keluar
           </Link>
         ) : (
           <>
+            {/* Di layar sempit tautan ini disembunyikan supaya tombol utama tetap
+                muat; katalog tetap terjangkau dari hero Dashboard dan footer. */}
             <Link
               href="/kumpulan"
-              className="rounded-full px-3 py-2 text-sm font-semibold text-ink-2 no-underline transition-colors hover:text-teal hover:no-underline"
+              className="hidden shrink-0 rounded-full px-3 py-2 text-sm font-semibold text-ink-2 no-underline transition-colors hover:text-teal hover:no-underline sm:block"
             >
               Kumpulan soal
             </Link>
@@ -54,10 +59,12 @@ export function AppHeader({ step }: Props) {
         {!inFlow && (
           <Link
             href="/buat"
-            className="flex items-center gap-2 rounded-full bg-teal px-5 py-[11px] font-display text-[15px] font-bold text-surface no-underline transition-colors hover:bg-teal-dark hover:text-surface hover:no-underline"
+            className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full bg-teal px-3 py-[11px] font-display text-[15px] font-bold text-surface no-underline transition-colors hover:bg-teal-dark hover:text-surface hover:no-underline sm:px-5"
           >
-            <TambahIcon size={16} />
-            Buat dari Foto
+            {/* Ikonnya dilepas di layar paling sempit; label tetap terbaca. */}
+            <TambahIcon size={16} className="hidden min-[360px]:block" />
+            <span className="sm:hidden">Buat</span>
+            <span className="hidden sm:inline">Buat dari Foto</span>
           </Link>
         )}
       </div>

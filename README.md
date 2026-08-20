@@ -58,6 +58,26 @@ Dua hal berbeda dari artboard-nya, keduanya disengaja:
 Selain itu tata letaknya dibuat responsif — artboard hanya menggambarkan lebar
 desktop, sedangkan grid template dan langkah ikut menyusut di layar sempit.
 
+## Layar kecil
+
+Seluruh halaman diperiksa pada 320, 375, 414, dan 768px: tidak ada satu pun yang
+menggeser mendatar. Aturan yang dipakai — nilai dasar untuk ponsel, nilai desain
+dipulihkan di breakpoint — sehingga tampilan desktop tidak ikut berubah sedikit pun.
+
+Tiga keputusan yang perlu diketahui:
+
+- **Header aplikasi** menyembunyikan tautan "Kumpulan soal" di bawah 640px supaya
+  tombol utama tetap muat. Katalog tetap terjangkau dari hero Dashboard dan footer
+  landing.
+- **Header admin** membungkus ke baris kedua di layar sempit, karena memaksakan satu
+  baris mendorong tombol keluar ke luar layar.
+- **Tabel admin dan Soal Saya** menggeser mendatar di dalam wadahnya sendiri, bukan
+  ikut melebarkan halaman. Kolomnya memang banyak dan menyusutkannya membuat isinya
+  tak terbaca.
+
+`min-width` dari berkas desain hanya berlaku sejak 640px ke atas; di bawah itu ia
+justru memaksa halaman melebar melebihi layar.
+
 ## Masuk lewat tautan email (opsional)
 
 Akun bersifat **tambahan**, bukan syarat: membuat, membagikan, dan menyunting soal

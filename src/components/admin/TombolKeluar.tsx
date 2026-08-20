@@ -17,7 +17,7 @@ export function TombolKeluar() {
         router.replace("/admin/masuk");
         router.refresh();
       }}
-      className="rounded-full border border-mint-dim/40 px-4 py-2 text-[13px] font-semibold text-mint transition-colors hover:border-mint hover:text-mint-bright disabled:opacity-60"
+      className="shrink-0 rounded-full border border-mint-dim/40 px-4 py-2 text-[13px] font-semibold text-mint transition-colors hover:border-mint hover:text-mint-bright disabled:opacity-60"
     >
       {keluar ? "Keluar…" : "Keluar"}
     </button>

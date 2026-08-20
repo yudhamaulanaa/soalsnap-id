@@ -18,7 +18,7 @@ export default async function DashboardPage() {
       <AppHeader />
 
       <main className="mx-auto flex w-full max-w-[1160px] flex-col gap-8 px-6 pb-[72px] pt-9">
-        <section className="relative flex flex-wrap items-center gap-10 overflow-hidden rounded-hero bg-forest p-12 text-surface">
+        <section className="relative flex flex-wrap items-center gap-10 overflow-hidden rounded-hero bg-forest p-6 text-surface sm:p-12">
           <div
             className="pointer-events-none absolute -right-[60px] -top-[120px] h-[380px] w-[380px] rounded-full"
             style={{
@@ -26,11 +26,11 @@ export default async function DashboardPage() {
             }}
             aria-hidden="true"
           />
-          <div className="relative flex min-w-[300px] flex-1 flex-col gap-4">
+          <div className="relative flex min-w-0 sm:min-w-[300px] flex-1 flex-col gap-4">
             <span className="self-start rounded-full border border-white/20 bg-white/12 px-3.5 py-1.5 text-[13px] font-semibold text-mint-bright">
               Gratis untuk semua — tanpa daftar akun
             </span>
-            <h1 className="m-0 font-display text-[42px] font-extrabold leading-[1.1] text-pretty">
+            <h1 className="m-0 font-display text-[30px] font-extrabold leading-[1.1] text-pretty sm:text-[42px]">
               Foto soalnya,
               <br />
               jadi latihannya.

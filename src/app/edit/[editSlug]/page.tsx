@@ -65,7 +65,7 @@ export default function EditPage() {
 
       <main className="mx-auto flex w-full max-w-[1160px] flex-col gap-5 px-6 pb-20 pt-9">
         <div className="flex flex-wrap items-end gap-4">
-          <div className="min-w-[300px] flex-1">
+          <div className="min-w-0 sm:min-w-[300px] flex-1">
             <h1 className="m-0 mb-1.5 font-display text-[30px] font-extrabold">{activity.title}</h1>
             <p className="m-0 text-[14.5px] text-ink-3">
               {templateLabel(activity.template)} · {soal.length} soal ·{" "}
