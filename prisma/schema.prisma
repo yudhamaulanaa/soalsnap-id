@@ -13,6 +13,11 @@ datasource db {
 model Activity {
   id String @id @default(cuid())
 
+  /// Pemilik akun bila pembuatnya sedang masuk; null berarti dibuat sebagai tamu.
+  /// Aktivitas tamu tetap sah — akun hanya mengumpulkannya, bukan mensyaratkannya.
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
   /// Tautan rahasia pemilik soal — untuk mengedit & melihat rekap.
   editSlug String @unique
   /// Tautan publik yang dibagikan ke peserta.
@@ -56,6 +61,7 @@ model Activity {
 
   @@index([visibility, kelas, mapel])
   @@index([visibility, createdAt])
+  @@index([userId, createdAt])
 }
 
 model Question {
@@ -190,4 +196,39 @@ model Upload {
   createdAt DateTime @default(now())
 
   @@index([jobId, urutan])
+}
+
+/// Akun opsional.
+///
+/// Aplikasi tetap bisa dipakai tanpa masuk; akun hanya mengumpulkan aktivitas
+/// supaya bertahan lintas perangkat dan tidak ikut hilang bersama penyimpanan
+/// peramban.
+model User {
+  id    String  @id @default(cuid())
+  email String  @unique
+  nama  String?
+
+  createdAt       DateTime  @default(now())
+  terakhirMasukAt DateTime?
+
+  activities  Activity[]
+  loginTokens LoginToken[]
+}
+
+/// Tautan masuk sekali pakai yang dikirim ke surel.
+model LoginToken {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Hash tokennya, bukan tokennya sendiri: basis data yang bocor tidak boleh
+  /// berubah menjadi izin masuk ke akun siapa pun.
+  hash String @unique
+
+  kedaluwarsaAt DateTime
+  /// Diisi saat ditukar dengan sesi; token yang sudah terpakai tidak berlaku lagi.
+  dipakaiAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, createdAt])
 }

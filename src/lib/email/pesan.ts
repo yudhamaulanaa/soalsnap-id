@@ -1,5 +1,3 @@
-import type { Creator } from "../types";
-
 /**
  * Isi surel "Kirimkan tautannya ke saya" pada halaman Bagikan.
  *
@@ -40,11 +38,12 @@ export interface HasilKirim {
   alasan?: string;
 }
 
-export interface KirimTautan {
-  kepada: Creator;
-  judul: string;
-  tautanEdit: string;
-  tautanMain: string;
+/** Satu surat siap kirim. Penyedia tidak perlu tahu isinya tentang apa. */
+export interface SuratKeluar {
+  kepada: string;
+  /** Nama penerima, bila diketahui; sebagian penyedia memakainya di header To. */
+  nama?: string | null;
+  pesan: PesanEmail;
 }
 
 /**
@@ -52,7 +51,7 @@ export interface KirimTautan {
  * penyedia bisa memakainya tanpa saling mengimpor dengan pemilih penyedianya.
  */
 export interface Pengirim {
-  kirim(pesan: KirimTautan): Promise<HasilKirim>;
+  kirim(surat: SuratKeluar): Promise<HasilKirim>;
 }
 
 /**
@@ -126,9 +125,19 @@ export function susunPesanTautan(isi: IsiTautan): PesanEmail {
  * Gaya ditulis inline: klien surel membuang <style> dan kelas Tailwind.
  * Warnanya diambil dari token yang sama dengan aplikasi (globals.css).
  */
+const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+
+/** Kartu pembungkus yang sama untuk seluruh surel SoalSnap. */
+function bungkusHtml(isi: string): string {
+  return `<div style="margin:0;padding:24px;background:#f2f4f1;font-family:${FONT};color:#182420">
+  <div style="max-width:520px;margin:0 auto;padding:32px;background:#ffffff;border:1px solid #e3e7e2;border-radius:20px">
+${isi}
+    <p style="margin:16px 0 0;font-size:13px;font-weight:700;color:#0e8a7b">— SoalSnap</p>
+  </div>
+</div>`;
+}
+
 function susunHtml(isi: IsiTautan, judul: string, sapaan: string): string {
-  const font =
-    "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
   const j = escapeHtml(judul);
   const main = escapeHtml(isi.tautanMain);
   const edit = escapeHtml(isi.tautanEdit);
@@ -147,9 +156,7 @@ function susunHtml(isi: IsiTautan, judul: string, sapaan: string): string {
         <a href="${url}" style="color:${warnaTeks};text-decoration:none">${url}</a>
       </p>`;
 
-  return `<div style="margin:0;padding:24px;background:#f2f4f1;font-family:${font};color:#182420">
-  <div style="max-width:520px;margin:0 auto;padding:32px;background:#ffffff;border:1px solid #e3e7e2;border-radius:20px">
-    <p style="margin:0 0 4px;font-size:15px;color:#41544e">${escapeHtml(sapaan)}</p>
+  return bungkusHtml(`    <p style="margin:0 0 4px;font-size:15px;color:#41544e">${escapeHtml(sapaan)}</p>
     <h1 style="margin:0 0 20px;font-size:22px;font-weight:800;line-height:1.3">
       Ini tautan untuk latihan &ldquo;${j}&rdquo;
     </h1>
@@ -159,8 +166,52 @@ ${kotak("TAUTAN EDIT — simpan, jangan dibagikan", "#92610a", "#fdf0d5", "#9261
       Tanpa akun, tautan edit itulah satu-satunya kunci untuk mengubah soal ini
       nanti. Siapa pun yang memilikinya bisa menyunting dan menghapus latihanmu,
       jadi simpan baik-baik.
+    </p>`);
+}
+
+/** Surel tautan masuk. Tautannya sekali pakai dan berumur pendek. */
+export function susunPesanMasuk(opsi: {
+  nama: string | null;
+  tautan: string;
+  umurMenit: number;
+}): PesanEmail {
+  const nama = opsi.nama?.trim();
+  const sapaan = nama ? `Halo ${nama},` : "Halo,";
+  const t = escapeHtml(opsi.tautan);
+
+  const teks = [
+    sapaan,
+    "",
+    "Buka tautan ini untuk masuk ke SoalSnap:",
+    opsi.tautan,
+    "",
+    `Tautannya berlaku ${opsi.umurMenit} menit dan hanya bisa dipakai sekali.`,
+    "Kalau kamu tidak meminta tautan ini, abaikan saja surel ini — tidak ada",
+    "yang berubah pada akunmu.",
+    "",
+    "— SoalSnap",
+  ].join("\n");
+
+  const html = bungkusHtml(`    <p style="margin:0 0 4px;font-size:15px;color:#41544e">${escapeHtml(sapaan)}</p>
+    <h1 style="margin:0 0 18px;font-size:22px;font-weight:800;line-height:1.3">
+      Masuk ke SoalSnap
+    </h1>
+    <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#41544e">
+      Klik tombol di bawah untuk masuk. Tautannya berlaku ${opsi.umurMenit} menit
+      dan hanya bisa dipakai sekali.
     </p>
-    <p style="margin:16px 0 0;font-size:13px;font-weight:700;color:#0e8a7b">— SoalSnap</p>
-  </div>
-</div>`;
+    <p style="margin:0 0 20px">
+      <a href="${t}" style="display:inline-block;padding:14px 28px;background:#0e8a7b;border-radius:999px;color:#ffffff;font-size:15px;font-weight:700;text-decoration:none">
+        Masuk ke SoalSnap
+      </a>
+    </p>
+    <p style="margin:0 0 20px;font-size:12.5px;line-height:1.6;color:#8a968f;word-break:break-all">
+      Kalau tombolnya tidak bekerja, salin tautan ini:<br />${t}
+    </p>
+    <p style="margin:0;padding-top:20px;border-top:1px solid #eef1ee;font-size:13px;line-height:1.6;color:#5b6963">
+      Kalau kamu tidak meminta tautan ini, abaikan saja surel ini — tidak ada yang
+      berubah pada akunmu.
+    </p>`);
+
+  return { subjek: "Tautan masuk ke SoalSnap", teks, html };
 }

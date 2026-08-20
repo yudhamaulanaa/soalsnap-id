@@ -113,6 +113,11 @@
   --animate-scanline: scanline 2.2s ease-in-out infinite;
   --animate-floaty: floaty 5s ease-in-out infinite;
 
+  /* Landing page memakai tempo dan amplitudo sendiri — disalin apa adanya dari
+     berkas desainnya, terpisah supaya animasi layar aplikasi tidak ikut berubah. */
+  --animate-scanline-lp: scanline 2.4s ease-in-out infinite;
+  --animate-floaty-lp: floaty-lp 6s ease-in-out infinite;
+
   @keyframes popin {
     from {
       transform: scale(0.94);
@@ -141,6 +146,15 @@
     }
     50% {
       transform: translateY(-7px);
+    }
+  }
+  @keyframes floaty-lp {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
     }
   }
 }

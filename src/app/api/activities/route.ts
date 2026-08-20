@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { asalAplikasi, tautanEditPenuh, tautanMainPenuh } from "@/lib/asal";
+import { penggunaSaatIni } from "@/lib/auth/sesi";
 import { prisma } from "@/lib/db";
 import { kirimTautanKePembuat } from "@/lib/email/kirim";
 import { aktivitasDari, soalKeBaris } from "@/lib/serialize";
@@ -22,8 +23,12 @@ export async function POST(request: Request) {
   }
   const data = hasil.data;
 
+  // Tamu tetap boleh membuat soal; akun hanya menandai pemiliknya bila ada.
+  const pengguna = await penggunaSaatIni();
+
   const activity = await prisma.activity.create({
     data: {
+      userId: pengguna?.id ?? null,
       editSlug: buatEditSlug(),
       playSlug: buatPlaySlug(),
       title: data.title?.trim() || "Latihan tanpa judul",
@@ -34,8 +39,8 @@ export async function POST(request: Request) {
       visibility: data.visibility,
       kelas: data.kelas,
       mapel: data.mapel,
-      creatorName: data.creator?.name?.trim() || null,
-      creatorEmail: data.creator?.email?.trim() || null,
+      creatorName: data.creator?.name?.trim() || pengguna?.nama || null,
+      creatorEmail: data.creator?.email?.trim() || pengguna?.email || null,
       creatorPhone: data.creator?.phone?.trim() || null,
       questions: {
         create: data.questions.map((q, i) => soalKeBaris(q as Question, i)),

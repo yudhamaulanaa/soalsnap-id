@@ -2,7 +2,7 @@ import "server-only";
 import { prisma } from "../db";
 import { tautanEditPenuh, tautanMainPenuh } from "../asal";
 import { pengirim, type HasilKirim } from "../notify";
-import { perluKirim } from "./pesan";
+import { perluKirim, susunPesanTautan } from "./pesan";
 
 /** Kolom yang dibutuhkan untuk memutuskan dan mencatat pengiriman. */
 export interface BarisPengiriman {
@@ -34,14 +34,14 @@ export async function kirimTautanKePembuat(
   const tujuan = activity.creatorEmail!.trim();
   const hasil = await pengirim
     .kirim({
-      kepada: {
-        name: activity.creatorName,
-        email: tujuan,
-        phone: activity.creatorPhone,
-      },
-      judul: activity.title,
-      tautanEdit: tautanEditPenuh(asal, activity.editSlug),
-      tautanMain: tautanMainPenuh(asal, activity.playSlug),
+      kepada: tujuan,
+      nama: activity.creatorName,
+      pesan: susunPesanTautan({
+        nama: activity.creatorName,
+        judul: activity.title,
+        tautanEdit: tautanEditPenuh(asal, activity.editSlug),
+        tautanMain: tautanMainPenuh(asal, activity.playSlug),
+      }),
     })
     .catch((e: unknown) => {
       console.error("[notify] pengiriman gagal:", e);

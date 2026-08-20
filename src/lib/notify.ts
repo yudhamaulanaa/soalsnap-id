@@ -1,6 +1,6 @@
 import "server-only";
 import { pengirimMailgun } from "./email/mailgun";
-import type { HasilKirim, KirimTautan, Pengirim } from "./email/pesan";
+import type { HasilKirim, Pengirim, SuratKeluar } from "./email/pesan";
 
 /**
  * Pengiriman tautan ke pembuat soal.
@@ -10,16 +10,17 @@ import type { HasilKirim, KirimTautan, Pengirim } from "./email/pesan";
  * aplikasi tetap jalan dan tautannya hanya dicatat ke log server. Penyedia lain
  * cukup memenuhi antarmuka `Pengirim` yang sama.
  */
-export type { HasilKirim, KirimTautan, Pengirim };
+export type { HasilKirim, Pengirim, SuratKeluar };
 
 export const pengirimCatatan: Pengirim = {
-  async kirim(pesan) {
-    if (!pesan.kepada.email) {
+  async kirim(surat) {
+    if (!surat.kepada.trim()) {
       return { terkirim: false, kode: "tanpa-email", alasan: "email tidak diisi" };
     }
+    // Badan surat ikut dicatat: tanpa penyedia, log inilah satu-satunya cara
+    // membaca tautan yang seharusnya dikirim.
     console.info(
-      `[notify] tautan "${pesan.judul}" untuk ${pesan.kepada.email} — ` +
-        `edit: ${pesan.tautanEdit} · main: ${pesan.tautanMain}`,
+      `[notify] surel untuk ${surat.kepada} — "${surat.pesan.subjek}"\n${surat.pesan.teks}`,
     );
     return { terkirim: false, kode: "belum-dikonfigurasi", alasan: "penyedia email belum dipasang" };
   },
