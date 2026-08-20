@@ -23,8 +23,8 @@ export default function LandingPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-[60] border-b border-line bg-app/[.88] backdrop-blur-[12px]">
-        <div className="mx-auto flex h-[70px] w-full max-w-[1160px] items-center gap-7 px-6">
-          <div className="flex items-center gap-2.5">
+        <div className="mx-auto flex h-[70px] w-full max-w-[1160px] items-center gap-2 px-3 md:gap-7 md:px-6">
+          <div className="flex shrink-0 items-center gap-2.5">
             <span className="grid h-[34px] w-[34px] place-items-center rounded-[11px] bg-teal text-surface">
               <KameraIcon size={18} />
             </span>
@@ -33,21 +33,24 @@ export default function LandingPage() {
             </span>
           </div>
 
-          <nav className="flex flex-1 items-center gap-6">
+          {/* Jangkar bagian disembunyikan di layar sempit — ketiganya masih ada
+              di footer, dan ruang header lebih dibutuhkan tombol utama. */}
+          <nav className="hidden flex-1 items-center gap-6 md:flex">
             <TautanNav href="#cara">Cara kerja</TautanNav>
             <TautanNav href="#template">Template</TautanNav>
             <TautanNav href="#harga">Harga</TautanNav>
           </nav>
 
+          <span className="flex-1 md:hidden" />
           <Link
             href="/masuk"
-            className="text-[14.5px] font-semibold text-ink-2 no-underline hover:text-ink-2 hover:no-underline"
+            className="shrink-0 text-[14.5px] font-semibold text-ink-2 no-underline hover:text-ink-2 hover:no-underline"
           >
             Masuk
           </Link>
           <Link
             href="/buat"
-            className="rounded-full bg-teal px-[22px] py-[11px] font-display text-[15px] font-bold text-surface no-underline transition-colors hover:bg-teal-dark hover:text-surface hover:no-underline"
+            className="shrink-0 whitespace-nowrap rounded-full bg-teal px-3.5 py-[11px] font-display text-[15px] font-bold text-surface no-underline transition-colors hover:bg-teal-dark hover:text-surface hover:no-underline md:px-[22px]"
           >
             Coba Gratis
           </Link>
@@ -55,20 +58,20 @@ export default function LandingPage() {
       </header>
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="mx-auto flex w-full max-w-[1160px] flex-wrap items-center gap-12 px-6 pb-10 pt-16">
+      <section className="mx-auto flex w-full max-w-[1160px] flex-wrap items-center gap-8 px-6 pb-10 pt-10 sm:gap-12 sm:pt-16">
         <div className="flex min-w-0 flex-[1_1_380px] flex-col gap-5">
           <div className="flex items-center gap-2 self-start rounded-full bg-ai-light px-4 py-[7px] text-[13px] font-bold text-ai-dark">
             <IkonKilau />
             Soal dipecah otomatis oleh AI
           </div>
 
-          <h1 className="m-0 font-display text-[56px] font-extrabold leading-[1.05] tracking-[-.02em] text-pretty">
+          <h1 className="m-0 font-display text-[34px] font-extrabold leading-[1.05] tracking-[-.02em] text-pretty sm:text-[44px] md:text-[56px]">
             Foto soalnya,
             <br />
             jadi latihannya.
           </h1>
 
-          <p className="m-0 max-w-[480px] text-[18px] leading-[1.6] text-ink-2 text-pretty">
+          <p className="m-0 max-w-[480px] text-[16px] leading-[1.6] text-ink-2 text-pretty sm:text-[18px]">
             Unggah foto buku, lembar kerja, atau PDF soal. AI memecahnya menjadi latihan
             interaktif yang siap dimainkan siswa lewat satu tautan — tanpa mengetik ulang satu
             nomor pun.
@@ -97,7 +100,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="relative flex min-w-0 flex-[1_1_420px] items-center justify-end gap-0 pb-14 pt-6">
+        <div className="relative flex min-w-0 flex-[1_1_420px] items-center justify-center gap-0 pb-14 pt-6 lg:justify-end">
           {/* Lembar soal yang sedang dipindai. */}
           <div
             className="relative flex h-[284px] w-[38%] max-w-[212px] shrink-0 flex-col gap-[11px] overflow-hidden rounded-2xl border border-paper-edge bg-paper p-[22px]"
@@ -170,7 +173,7 @@ export default function LandingPage() {
       {/* ── Cara kerja ───────────────────────────────────────────────────── */}
       <section
         id="cara"
-        className="mx-auto flex w-full max-w-[1160px] flex-col gap-7 px-6 py-14"
+        className="mx-auto flex w-full max-w-[1160px] flex-col gap-7 px-6 py-10 sm:py-14"
       >
         <div className="flex max-w-[600px] flex-col gap-2">
           <Kapital>CARA KERJA</Kapital>
@@ -225,11 +228,11 @@ export default function LandingPage() {
       {/* ── Delapan template ─────────────────────────────────────────────── */}
       <section
         id="template"
-        className="border-y border-line bg-surface py-16"
+        className="border-y border-line bg-surface py-10 sm:py-16"
       >
         <div className="mx-auto flex w-full max-w-[1160px] flex-col gap-7 px-6">
           <div className="flex flex-wrap items-end gap-6">
-            <div className="flex min-w-[300px] flex-1 flex-col gap-2">
+            <div className="flex min-w-0 sm:min-w-[300px] flex-1 flex-col gap-2">
               <Kapital>TEMPLATE</Kapital>
               <JudulBagian>Satu bank soal, delapan cara bermain</JudulBagian>
               <p className="m-0 max-w-[520px] text-[16px] leading-[1.6] text-ink-3 text-pretty">
@@ -375,8 +378,8 @@ export default function LandingPage() {
       </section>
 
       {/* ── Sisi siswa ───────────────────────────────────────────────────── */}
-      <section className="mx-auto w-full max-w-[1160px] px-6 py-16">
-        <div className="relative grid grid-cols-1 items-center gap-11 overflow-hidden rounded-hero bg-forest p-12 text-surface lg:grid-cols-[1fr_.8fr]">
+      <section className="mx-auto w-full max-w-[1160px] px-6 py-10 sm:py-16">
+        <div className="relative grid grid-cols-1 items-center gap-8 overflow-hidden rounded-hero bg-forest p-6 text-surface sm:gap-11 sm:p-12 lg:grid-cols-[1fr_.8fr]">
           <div
             className="pointer-events-none absolute -right-20 -top-[140px] h-[420px] w-[420px] rounded-full"
             style={{ background: "radial-gradient(circle, rgba(109,90,230,.45), transparent 65%)" }}
@@ -387,7 +390,7 @@ export default function LandingPage() {
             <span className="self-start rounded-full border border-white/20 bg-white/12 px-3.5 py-1.5 text-[13px] font-semibold text-mint-bright">
               Sisi siswa
             </span>
-            <h2 className="m-0 font-display text-[34px] font-extrabold leading-[1.15] text-pretty">
+            <h2 className="m-0 font-display text-[26px] font-extrabold leading-[1.15] text-pretty sm:text-[34px]">
               Siswa cukup buka tautan. Tidak ada pendaftaran.
             </h2>
             <p className="m-0 max-w-[440px] text-[16px] leading-[1.65] text-mint-soft text-pretty">
@@ -406,7 +409,10 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="relative flex items-center justify-center gap-[18px]" aria-hidden="true">
+          <div
+            className="relative flex flex-wrap items-center justify-center gap-[18px]"
+            aria-hidden="true"
+          >
             <div
               className="flex w-[220px] flex-col gap-[11px] rounded-[20px] bg-surface p-[18px]"
               style={{ boxShadow: "0 18px 44px rgba(0,0,0,.28)" }}
@@ -453,7 +459,7 @@ export default function LandingPage() {
       {/* ── Harga ────────────────────────────────────────────────────────── */}
       <section
         id="harga"
-        className="mx-auto flex w-full max-w-[1160px] flex-col gap-7 px-6 pb-16 pt-2"
+        className="mx-auto flex w-full max-w-[1160px] flex-col gap-7 px-6 pb-10 pt-2 sm:pb-16"
       >
         <div className="flex max-w-[600px] flex-col gap-2">
           <Kapital>HARGA</Kapital>
@@ -461,11 +467,11 @@ export default function LandingPage() {
         </div>
 
         <div
-          className="grid grid-cols-1 items-center gap-11 rounded-hero border-2 border-teal bg-surface p-11 sm:grid-cols-[auto_1fr]"
+          className="grid grid-cols-1 items-center gap-8 rounded-hero border-2 border-teal bg-surface p-6 sm:grid-cols-[auto_1fr] sm:gap-11 sm:p-11"
           style={{ boxShadow: "0 12px 32px rgba(24,36,32,.1)" }}
         >
           <div className="flex flex-col gap-1.5">
-            <span className="font-display text-[72px] font-black leading-none text-teal">
+            <span className="font-display text-[52px] font-black leading-none text-teal sm:text-[72px]">
               Rp 0
             </span>
             <span className="text-[15px] font-semibold text-ink-3">
@@ -491,9 +497,9 @@ export default function LandingPage() {
       </section>
 
       {/* ── Pertanyaan yang sering muncul ────────────────────────────────── */}
-      <section className="border-t border-line bg-surface py-16">
+      <section className="border-t border-line bg-surface py-10 sm:py-16">
         <div className="mx-auto flex w-full max-w-[820px] flex-col gap-[26px] px-6">
-          <h2 className="m-0 font-display text-[34px] font-extrabold leading-[1.15]">
+          <h2 className="m-0 font-display text-[26px] font-extrabold leading-[1.15] sm:text-[34px]">
             Pertanyaan yang sering muncul
           </h2>
           <div className="flex flex-col gap-3.5">
@@ -522,9 +528,9 @@ export default function LandingPage() {
       {/* ── Ajakan penutup ───────────────────────────────────────────────── */}
       <section
         id="cta"
-        className="mx-auto flex w-full max-w-[1160px] flex-col items-center gap-5 px-6 py-[72px] text-center"
+        className="mx-auto flex w-full max-w-[1160px] flex-col items-center gap-5 px-6 py-12 text-center sm:py-[72px]"
       >
-        <h2 className="m-0 max-w-[620px] font-display text-[42px] font-extrabold leading-[1.1] text-pretty">
+        <h2 className="m-0 max-w-[620px] font-display text-[30px] font-extrabold leading-[1.1] text-pretty sm:text-[42px]">
           Lembar soal di meja Anda sudah cukup untuk mulai.
         </h2>
         <p className="m-0 max-w-[480px] text-[17px] leading-[1.6] text-ink-2 text-pretty">
@@ -544,7 +550,7 @@ export default function LandingPage() {
 
       <footer className="bg-forest py-10 text-mint-soft">
         <div className="mx-auto flex w-full max-w-[1160px] flex-wrap items-center gap-6 px-6">
-          <div className="flex items-center gap-2.5">
+          <div className="flex shrink-0 items-center gap-2.5">
             <span className="grid h-[30px] w-[30px] place-items-center rounded-[10px] bg-teal text-surface">
               <KameraIcon size={16} />
             </span>
@@ -613,7 +619,7 @@ function Kapital({ children }: { children: ReactNode }) {
 
 function JudulBagian({ children }: { children: ReactNode }) {
   return (
-    <h2 className="m-0 font-display text-[36px] font-extrabold leading-[1.15] text-pretty">
+    <h2 className="m-0 font-display text-[26px] font-extrabold leading-[1.15] text-pretty sm:text-[36px]">
       {children}
     </h2>
   );

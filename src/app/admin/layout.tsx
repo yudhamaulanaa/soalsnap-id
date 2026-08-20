@@ -21,11 +21,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="flex min-h-screen flex-col bg-app">
-      <header className="sticky top-0 z-50 h-16 bg-forest">
-        <div className="flex h-full items-center gap-5 px-6">
+      <header className="sticky top-0 z-50 bg-forest">
+        {/* Di layar sempit navigasinya turun ke baris kedua; memaksakan satu
+            baris membuat tombol keluar terdorong ke luar layar. */}
+        <div className="flex min-h-16 flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2 sm:flex-nowrap sm:px-6 sm:py-0">
           <Link
             href={masuk ? "/admin" : "/"}
-            className="flex items-center gap-2.5 no-underline hover:no-underline"
+            className="flex shrink-0 items-center gap-2.5 no-underline hover:no-underline"
           >
             <span className="grid h-[34px] w-[34px] place-items-center rounded-[11px] bg-mint text-forest">
               <PerisaiIcon size={18} />
@@ -36,12 +38,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </Link>
 
           {masuk && (
-            <nav className="flex flex-1 items-center gap-1">
+            <nav className="order-last flex w-full items-center gap-1 overflow-x-auto sm:order-none sm:w-auto sm:flex-1 sm:overflow-visible">
               {NAV.map((n) => (
                 <Link
                   key={n.href}
                   href={n.href}
-                  className="rounded-full px-3.5 py-2 text-[13.5px] font-semibold text-mint-dim no-underline transition-colors hover:text-mint-bright hover:no-underline"
+                  className="shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-[13.5px] font-semibold text-mint-dim no-underline transition-colors hover:text-mint-bright hover:no-underline"
                 >
                   {n.label}
                 </Link>
@@ -49,10 +51,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </nav>
           )}
 
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex shrink-0 items-center gap-3">
             <Link
               href="/"
-              className="text-[13px] font-semibold text-mint-dim no-underline hover:text-mint-bright hover:no-underline"
+              className="whitespace-nowrap text-[13px] font-semibold text-mint-dim no-underline hover:text-mint-bright hover:no-underline"
             >
               Ke aplikasi
             </Link>

@@ -43,7 +43,7 @@ export function StatusAkun() {
     return (
       <Link
         href="/masuk"
-        className="rounded-full px-3 py-2 text-sm font-semibold text-ink-2 no-underline transition-colors hover:text-teal hover:no-underline"
+        className="shrink-0 whitespace-nowrap rounded-full px-2 py-2 text-sm sm:px-3 font-semibold text-ink-2 no-underline transition-colors hover:text-teal hover:no-underline"
       >
         Masuk
       </Link>
@@ -54,7 +54,7 @@ export function StatusAkun() {
     <Link
       href="/soal-saya"
       title={pengguna.email}
-      className="rounded-full px-3 py-2 text-sm font-semibold text-ink-2 no-underline transition-colors hover:text-teal hover:no-underline"
+      className="shrink-0 whitespace-nowrap rounded-full px-2 py-2 text-sm sm:px-3 font-semibold text-ink-2 no-underline transition-colors hover:text-teal hover:no-underline"
     >
       Soal Saya
     </Link>
