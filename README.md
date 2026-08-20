@@ -40,6 +40,24 @@ hilang dan penyimpanan peramban terhapus, aktivitas tidak bisa disunting lagi.
 [Masuk lewat tautan email](#masuk-lewat-tautan-email-opsional) ada justru untuk
 menutup celah itu, dan tetap opsional.
 
+## Landing page
+
+`/` adalah halaman pengenalan untuk pengunjung baru, ditranskripsi dari
+`project/Page 10 Landing.dc.html`. Nilai px, warna, dan bayangannya disalin apa
+adanya; warnanya kebetulan sudah menjadi token di `globals.css`, jadi yang dipakai
+token. Dashboard pindah ke `/dashboard`.
+
+Dua hal berbeda dari artboard-nya, keduanya disengaja:
+
+- **Tujuan tombol.** Di artboard semua tombol menunjuk jangkar `#cta` karena memang
+  tidak bisa menuju ke mana pun. Di aplikasi diarahkan ke `/buat` dan `/masuk`.
+- **Warna teks pertanyaan pada kartu "Sisi siswa".** Di artboard teks itu mewarisi
+  `color:#FFFFFF` dari panel gelap di belakangnya, sehingga menjadi putih di atas
+  kartu putih dan tidak terbaca. Di sini warnanya dikembalikan ke warna teks biasa.
+
+Selain itu tata letaknya dibuat responsif — artboard hanya menggambarkan lebar
+desktop, sedangkan grid template dan langkah ikut menyusut di layar sempit.
+
 ## Masuk lewat tautan email (opsional)
 
 Akun bersifat **tambahan**, bukan syarat: membuat, membagikan, dan menyunting soal
@@ -85,7 +103,8 @@ yang sedang berjalan.
 
 | Rute | Halaman desain |
 |---|---|
-| `/` | 01 Dashboard — aktivitas peramban ini + soal publik terbaru |
+| `/` | 10 Landing — halaman pengenalan untuk pengunjung baru |
+| `/dashboard` | 01 Dashboard — aktivitas peramban ini + soal publik terbaru |
 | `/buat` | 02 Unggah |
 | `/buat/proses` | 03 Proses AI |
 | `/buat/review` | 04 Review Draft |
@@ -329,8 +348,9 @@ Lihat `project/blueprint.md` §11 untuk rencana rilis.
 
 Repositori ini berawal dari paket handoff Claude Design. Berkas aslinya tetap ada:
 
-- `project/` — prototipe `.dc.html` (9 halaman + prototipe interaktif `SoalSnap.dc.html`)
-  dan dokumen produk: `blueprint.md`, `brd.md`, `prd.md`, `frd.md`, `design.md`, `UIKit.md`.
+- `project/` — prototipe `.dc.html` (9 halaman aplikasi + landing page + prototipe
+  interaktif `SoalSnap.dc.html`) dan dokumen produk: `blueprint.md`, `brd.md`, `prd.md`,
+  `frd.md`, `design.md`, `UIKit.md`.
 - `chats/` — transkrip percakapan desain.
 
 Kode di `src/` mengikuti dokumen-dokumen itu; nomor persyaratan (`FR-…`) yang muncul di

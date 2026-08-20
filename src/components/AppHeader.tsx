@@ -34,7 +34,7 @@ export function AppHeader({ step }: Props) {
 
         {inFlow ? (
           <Link
-            href="/"
+            href="/dashboard"
             className="rounded-full border border-line px-[18px] py-[9px] text-sm font-semibold text-ink-3 no-underline transition-colors hover:border-line-hover hover:text-ink hover:no-underline"
           >
             Keluar

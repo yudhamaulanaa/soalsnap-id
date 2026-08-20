@@ -158,7 +158,7 @@ export default function EditPage() {
                 const res = await fetch(`/api/activities/${editSlug}`, { method: "DELETE" });
                 if (res.ok) {
                   lupakanMilikku(editSlug);
-                  router.push("/");
+                  router.push("/dashboard");
                 }
               }}
               className="rounded-full border-[1.5px] border-line px-5 py-2.5 text-[13px] font-semibold text-ink-3 transition-colors hover:border-wrong hover:text-wrong"
