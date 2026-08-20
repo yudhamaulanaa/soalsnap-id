@@ -76,6 +76,12 @@ model Question {
   /// Kunci jawaban teks untuk isian.
   kunci String?
 
+  /// Kunci objek gambar soal di R2 (selalu berprefiks "soal/"); null berarti
+  /// soal ini murni teks.
+  gambar    String?
+  /// Teks alternatif gambar, untuk pembaca layar dan saat gambar gagal dimuat.
+  gambarAlt String?
+
   conf   Int     @default(100)
   low    Boolean @default(false)
   note   String?
@@ -124,4 +130,64 @@ model Report {
 
   @@index([status, createdAt])
   @@index([activityId])
+}
+
+/// Satu permintaan konversi dokumen menjadi soal.
+///
+/// Dokumen yang diunggah tidak diproses seketika: job masuk antrean, lalu
+/// diambil worker yang berjalan terpisah. Kolom klaim menjaga satu job tidak
+/// dikerjakan dua worker sekaligus.
+model ParseJob {
+  id String @id @default(cuid())
+
+  /// Tautan rahasia pemantau. Tanpa akun, token inilah izin melihat hasilnya.
+  token String @unique
+
+  /// "menyusun" | "antre" | "diproses" | "selesai" | "gagal"
+  status  String  @default("menyusun")
+  progres Int     @default(0)
+  /// Label tahap yang sedang berjalan, untuk layar Proses AI.
+  tahap   String?
+  galat   String?
+
+  /// Soal hasil worker sebagai JSON; kosong sampai job selesai.
+  hasil String?
+
+  workerId  String?
+  klaimAt   DateTime?
+  percobaan Int       @default(0)
+
+  createdAt DateTime  @default(now())
+  antreAt   DateTime?
+  selesaiAt DateTime?
+
+  uploads Upload[]
+
+  @@index([status, antreAt])
+}
+
+/// Satu berkas milik sebuah job, tersimpan di bucket R2.
+model Upload {
+  id    String   @id @default(cuid())
+  jobId String
+  job   ParseJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  /// Kunci objek di R2.
+  key         String @unique
+  namaAsli    String
+  /// "image" | "pdf" | "docx" | "text"
+  kind        String
+  contentType String
+
+  /// Ukuran byte, diisi ulang dari R2 saat unggahan dikonfirmasi.
+  ukuran Int @default(0)
+  /// Jumlah halaman sebenarnya, dihitung di server (FR-UP-5).
+  halaman Int @default(1)
+
+  /// Objeknya sudah benar-benar ada di R2, bukan sekadar dijanjikan klien.
+  tersimpan Boolean @default(false)
+  urutan    Int
+  createdAt DateTime @default(now())
+
+  @@index([jobId, urutan])
 }

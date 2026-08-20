@@ -1,5 +1,7 @@
 "use client";
 
+import { EditorGambar } from "./EditorGambar";
+import { GambarSoal } from "./GambarSoal";
 import { SampahIcon } from "./Icons";
 import type { Question } from "@/lib/types";
 
@@ -87,6 +89,12 @@ export function QuestionCard({
         />
       ) : (
         <p className="m-0 mt-3 text-base font-semibold leading-[1.5] text-pretty">{q.q}</p>
+      )}
+
+      {editing ? (
+        <EditorGambar gambar={q.gambar} gambarAlt={q.gambarAlt} nomor={no} onChange={onChange} />
+      ) : (
+        q.gambar && <GambarSoal kunci={q.gambar} alt={q.gambarAlt} className="mt-3" />
       )}
 
       {!isIsian && (

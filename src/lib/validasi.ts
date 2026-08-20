@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { KELAS, MAPEL } from "./kategori";
 import { ALASAN_IDS } from "./laporan";
+import { MAX_BERKAS, MAX_UKURAN_BYTE } from "./unggah/berkas";
+import { MAX_GAMBAR_BYTE, kunciGambarSah } from "./unggah/gambar";
 import { TEMPLATES } from "./templates";
 import { TIMER_MAX, TIMER_MIN } from "./types";
 
@@ -14,6 +16,13 @@ export const soalSchema = z.object({
   opts: z.array(z.string().max(500)).max(8).optional(),
   correct: z.number().int().min(0).max(7).optional(),
   key: z.string().max(500).optional(),
+  // Kunci datang dari klien, jadi ruang namanya diperiksa — bukan sekadar panjangnya.
+  gambar: z
+    .string()
+    .max(200)
+    .refine(kunciGambarSah, "Kunci gambar tidak sah")
+    .optional(),
+  gambarAlt: z.string().trim().max(300).optional(),
   conf: z.number().int().min(0).max(100).default(100),
   low: z.boolean().optional(),
   note: z.string().max(500).optional(),
@@ -69,6 +78,26 @@ export const katalogQuerySchema = z.object({
 export const laporanSchema = z.object({
   alasan: z.enum(ALASAN_IDS),
   catatan: z.string().trim().max(500).optional(),
+});
+
+/** Permintaan izin unggah; isinya baru metadata, berkasnya menyusul ke R2. */
+export const unggahSchema = z.object({
+  berkas: z
+    .array(
+      z.object({
+        nama: z.string().trim().min(1).max(200),
+        contentType: z.string().trim().min(1).max(120),
+        ukuran: z.number().int().min(1).max(MAX_UKURAN_BYTE),
+      }),
+    )
+    .min(1)
+    .max(MAX_BERKAS),
+});
+
+/** Permintaan izin unggah satu gambar soal. */
+export const gambarSchema = z.object({
+  contentType: z.string().trim().min(1).max(120),
+  ukuran: z.number().int().min(1).max(MAX_GAMBAR_BYTE),
 });
 
 export const masukAdminSchema = z.object({

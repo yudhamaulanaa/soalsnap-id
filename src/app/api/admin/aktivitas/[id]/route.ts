@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { sesiAdminSah } from "@/lib/admin/sesi";
 import { prisma } from "@/lib/db";
+import { sapuGambar } from "@/lib/unggah/sapu";
 import { moderasiSchema, pesanValidasi } from "@/lib/validasi";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -64,10 +65,16 @@ export async function DELETE(_request: Request, { params }: Ctx) {
   }
   const { id } = await params;
 
-  const ada = await prisma.activity.findUnique({ where: { id }, select: { id: true } });
+  const ada = await prisma.activity.findUnique({
+    where: { id },
+    select: { id: true, questions: { select: { gambar: true } } },
+  });
   if (!ada) {
     return NextResponse.json({ error: "Aktivitas tidak ditemukan" }, { status: 404 });
   }
+
   await prisma.activity.delete({ where: { id } });
+  await sapuGambar(ada.questions.map((q) => q.gambar));
+
   return NextResponse.json({ ok: true });
 }

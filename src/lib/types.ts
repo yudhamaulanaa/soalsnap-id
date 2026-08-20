@@ -28,6 +28,10 @@ export interface Question {
   correct?: number;
   /** Kunci jawaban teks untuk `isian`. */
   key?: string;
+  /** Kunci objek gambar soal di R2; kosong berarti soal murni teks. */
+  gambar?: string;
+  /** Teks alternatif gambar, untuk pembaca layar. */
+  gambarAlt?: string;
   /** Skor keyakinan AI 0–100 (FR-AI-2). */
   conf: number;
   /** Ditandai bila `conf` < AMBANG_KEYAKINAN (FR-AI-5). */
@@ -123,6 +127,11 @@ export interface Draft {
   files: UploadFileRef[];
   questions: Question[];
   sourcePages?: SourcePage[];
+  /**
+   * Token job pemrosesan setelah berkasnya terunggah. Tanpa akun, token inilah
+   * izin memantau antrean dan mengambil hasilnya.
+   */
+  token?: string;
   /** Soal yang sedang dalam mode edit di layar Review (FR-RV-3, FR-RV-7). */
   editingId?: string | null;
 }
