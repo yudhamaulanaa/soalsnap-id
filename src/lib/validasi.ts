@@ -100,6 +100,21 @@ export const gambarSchema = z.object({
   ukuran: z.number().int().min(1).max(MAX_GAMBAR_BYTE),
 });
 
+export const mintaMasukSchema = z.object({
+  // Dirapikan dulu baru divalidasi: papan ketik ponsel kerap menyisipkan spasi
+  // di ujung, dan menolaknya sebagai "email tidak sah" akan membingungkan.
+  email: z.string().trim().max(200).pipe(z.email()),
+});
+
+export const verifikasiMasukSchema = z.object({
+  token: z.string().trim().min(32).max(64),
+});
+
+/** Tautan sunting yang dipegang peramban, untuk dikumpulkan ke akun. */
+export const klaimSchema = z.object({
+  editSlugs: z.array(z.string().trim().min(10).max(40)).min(1).max(200),
+});
+
 export const masukAdminSchema = z.object({
   sandi: z.string().min(1).max(200),
 });

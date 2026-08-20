@@ -1,4 +1,4 @@
-import { susunPesanTautan, type HasilKirim, type Pengirim, type PesanEmail } from "./pesan";
+import type { HasilKirim, Pengirim, PesanEmail } from "./pesan";
 
 /**
  * Penyedia surel Mailgun.
@@ -58,16 +58,9 @@ function otorisasi(apiKey: string): string {
 
 export function pengirimMailgun(konfig: KonfigurasiMailgun): Pengirim {
   return {
-    async kirim(pesan) {
-      const tujuan = pesan.kepada.email?.trim();
+    async kirim(surat) {
+      const tujuan = surat.kepada.trim();
       if (!tujuan) return { terkirim: false, kode: "tanpa-email", alasan: "email tidak diisi" };
-
-      const surat = susunPesanTautan({
-        nama: pesan.kepada.name,
-        judul: pesan.judul,
-        tautanEdit: pesan.tautanEdit,
-        tautanMain: pesan.tautanMain,
-      });
 
       try {
         const res = await fetch(alamatKirim(konfig.domain, konfig.pangkal), {
@@ -80,7 +73,7 @@ export function pengirimMailgun(konfig: KonfigurasiMailgun): Pengirim {
             dari: konfig.dari,
             tujuan,
             balasKe: konfig.balasKe,
-            surat,
+            surat: surat.pesan,
           }).toString(),
           signal: AbortSignal.timeout(BATAS_TUNGGU_MS),
         });

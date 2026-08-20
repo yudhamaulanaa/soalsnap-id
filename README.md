@@ -35,8 +35,51 @@ yang menggantikan akun:
 
 `editSlug` tidak pernah ikut dalam respons API publik maupun katalog. Peramban
 pembuat menyimpan daftar tautan suntingnya di `localStorage` supaya muncul di
-Dashboard — itu satu-satunya "kepemilikan" yang ada, jadi kalau tautannya hilang
-dan penyimpanan peramban terhapus, aktivitas tidak bisa disunting lagi.
+Dashboard — itu satu-satunya "kepemilikan" yang ada bagi tamu, jadi kalau tautannya
+hilang dan penyimpanan peramban terhapus, aktivitas tidak bisa disunting lagi.
+[Masuk lewat tautan email](#masuk-lewat-tautan-email-opsional) ada justru untuk
+menutup celah itu, dan tetap opsional.
+
+## Masuk lewat tautan email (opsional)
+
+Akun bersifat **tambahan**, bukan syarat: membuat, membagikan, dan menyunting soal
+tetap bisa dilakukan tanpa masuk, dan tautan sunting tetap menjadi kunci menyunting
+satu aktivitas. Yang ditambahkan akun hanya satu hal — mengumpulkan soal supaya
+bertahan lintas perangkat dan tidak ikut hilang saat penyimpanan peramban dibersihkan.
+
+Tidak ada kata sandi. Alamat surel ditukar dengan tautan masuk sekali pakai:
+
+1. `POST /api/auth/minta` — membuat akun bila belum ada, lalu mengirim tautan.
+   Token 32 byte acak; yang disimpan di basis data hanya **hash SHA-256**-nya,
+   sehingga basis data yang bocor tidak berubah menjadi izin masuk. Tautan lama yang
+   belum terpakai langsung dilumpuhkan — hanya satu tautan boleh hidup per akun.
+2. `/masuk/[token]` — halaman konfirmasi dengan tombol, lalu
+   `POST /api/auth/verifikasi` menukarnya dengan cookie sesi `httpOnly` (30 hari).
+
+**Kenapa ada tombol, bukan langsung masuk saat tautannya dibuka?** Pemindai tautan
+pada surel korporat kerap memuat tautan lebih dulu untuk diperiksa. Kalau verifikasi
+terjadi pada GET, pemindai itulah yang memakai habis token sekali-pakai, dan
+pemiliknya menerima tautan yang sudah mati.
+
+Tautan berlaku **15 menit**, sekali pakai, dan permintaannya dibatasi dua arah:
+5 kali per alamat dan 10 kali per pemanggil tiap jam — per alamat supaya satu orang
+tidak dibanjiri surel, per pemanggil supaya fiturnya tidak dipakai membanjiri banyak
+alamat sekaligus.
+
+**Mengumpulkan soal lama.** Saat masuk, dua hal ikut terkumpul ke akun:
+
+- aktivitas yang dulu dibuat dengan alamat surel yang sama (`creatorEmail`);
+- aktivitas yang tautan suntingnya masih tersimpan di peramban yang dipakai masuk
+  (`POST /api/auth/klaim`).
+
+Keduanya hanya mengambil aktivitas yang **belum bertuan**. Memegang tautan sunting
+memang sudah berarti boleh menyunting dan menghapus, jadi mengaitkannya ke akun
+tidak menambah wewenang — tetapi aktivitas yang sudah punya pemilik tidak ikut
+berpindah, supaya tautan yang terlanjur dibagikan tidak bisa dipakai mengambil alih.
+
+`AUTH_SECRET` adalah kunci tanda tangan sesinya. Selama kosong, fitur masuk tertutup
+dan aplikasi tetap berjalan penuh tanpa akun. Menggantinya membatalkan semua sesi
+yang sedang berjalan.
 
 ## Halaman
 
@@ -51,6 +94,8 @@ dan penyimpanan peramban terhapus, aktivitas tidak bisa disunting lagi.
 | `/main/[playSlug]` | 07 Main Kuis · 08 Mode main lainnya · 09 Hasil |
 | `/edit/[editSlug]` | halaman pemilik: sunting soal, rekap peserta, hapus |
 | `/kumpulan` | katalog soal publik, difilter per kelas & mata pelajaran |
+| `/masuk` · `/masuk/[token]` | minta tautan masuk, lalu konfirmasi dari surel |
+| `/soal-saya` | kumpulan soal milik akun, lintas perangkat |
 | `/admin` · `/admin/aktivitas` · `/admin/laporan` | audit & moderasi, di balik sandi |
 
 Peserta membuka `/main/[playSlug]`, mengisi nama (boleh dikosongkan), mengerjakan,
@@ -61,7 +106,8 @@ mencoba tanpa hasilnya ikut tercatat.
 
 SQLite lewat Prisma 7 (`prisma/schema.prisma`): tiga tabel sesuai `frd.md` §8 —
 `Activity`, `Question`, `PlaySession` — ditambah `Report` untuk antrean laporan
-konten serta `ParseJob`/`Upload` untuk antrean pemrosesan dokumen. Pindah ke Postgres cukup mengganti `provider` beserta adapter-nya — skema
+konten, `ParseJob`/`Upload` untuk antrean pemrosesan dokumen, serta `User`/`LoginToken`
+untuk akun opsional dan tautan masuknya. Pindah ke Postgres cukup mengganti `provider` beserta adapter-nya — skema
 dan kueri tidak berubah.
 
 **Catatan penilaian.** Sama seperti prototype, penilaian dihitung di peramban,
@@ -250,6 +296,7 @@ src/components/     komponen bersama; components/play/ berisi 5 mode main
 src/lib/            tipe, akses basis data, validasi, turunan bank soal, parser AI
 src/lib/email/      penyusunan & pengiriman surel tautan
 src/lib/unggah/     aturan berkas, hitung halaman, dan alur unggah di peramban
+src/lib/auth/       sesi pengguna dan token tautan masuk
 src/lib/admin/      sesi admin, pembatas laju, kueri audit
 src/lib/__tests__/  tes logika permainan & validasi API
 ```

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { StatusAkun } from "./auth/StatusAkun";
 import { KameraIcon, TambahIcon } from "./Icons";
 
 const LANGKAH = ["Unggah", "Review AI", "Template", "Bagikan"];
@@ -39,12 +40,15 @@ export function AppHeader({ step }: Props) {
             Keluar
           </Link>
         ) : (
-          <Link
-            href="/kumpulan"
-            className="rounded-full px-3 py-2 text-sm font-semibold text-ink-2 no-underline transition-colors hover:text-teal hover:no-underline"
-          >
-            Kumpulan soal
-          </Link>
+          <>
+            <Link
+              href="/kumpulan"
+              className="rounded-full px-3 py-2 text-sm font-semibold text-ink-2 no-underline transition-colors hover:text-teal hover:no-underline"
+            >
+              Kumpulan soal
+            </Link>
+            <StatusAkun />
+          </>
         )}
 
         {!inFlow && (
