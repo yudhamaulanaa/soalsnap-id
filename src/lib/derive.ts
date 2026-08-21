@@ -1,3 +1,4 @@
+import { altOpsi, gambarOpsi, punyaOpsiGambar, teksOpsi } from "./types";
 import type { Question } from "./types";
 
 /**
@@ -6,11 +7,23 @@ import type { Question } from "./types";
  * tiap template — tanpa pernah mengubah bank soalnya.
  */
 
-/** Jawaban benar sebagai teks, apa pun tipe soalnya. */
+/**
+ * Jawaban benar sebagai teks, apa pun tipe soalnya.
+ *
+ * Pilihan yang murni gambar tidak punya teks, jadi hasilnya kosong — itu yang
+ * membuat mode berbasis teks melewatinya, bukan menampilkan kotak kosong.
+ */
 export function answerOf(q: Question): string {
   if (q.type === "isian") return q.key?.trim() ?? "";
-  const opts = q.opts ?? [];
-  return opts[q.correct ?? -1] ?? "";
+  const opsi = (q.opts ?? [])[q.correct ?? -1];
+  return opsi === undefined ? "" : teksOpsi(opsi);
+}
+
+/** Gambar jawaban benar, bila kuncinya berupa pilihan bergambar. */
+export function answerGambarOf(q: Question): string | undefined {
+  if (q.type === "isian") return undefined;
+  const opsi = (q.opts ?? [])[q.correct ?? -1];
+  return opsi === undefined ? undefined : gambarOpsi(opsi);
 }
 
 /** Label pendek untuk sisi kiri Menjodohkan / petunjuk Susun Kata. */
@@ -20,7 +33,10 @@ export function clueOf(q: Question): string {
   return t.length > 48 ? `${t.slice(0, 48)}…` : t;
 }
 
-export function shuffle<T>(list: readonly T[], rng: () => number = Math.random): T[] {
+export function shuffle<T>(
+  list: readonly T[],
+  rng: () => number = Math.random,
+): T[] {
   const a = list.slice();
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
@@ -47,6 +63,9 @@ export function buildPairs(questions: readonly Question[], limit = 6): Pair[] {
   const pairs: Pair[] = [];
   for (const q of questions) {
     if (q.type === "bs") continue;
+    // Menjodohkan menyandingkan dua kolom teks; soal yang pilihannya gambar
+    // tidak punya sisi kanan yang bisa dibaca, jadi dilewati.
+    if (punyaOpsiGambar(q)) continue;
     const right = answerOf(q);
     if (!right) continue;
     const norm = right.toLowerCase();
@@ -67,11 +86,16 @@ export interface WordItem {
  * Susun Kata & Cari Kata butuh kunci satu kata 4–10 huruf
  * (blueprint.md §6, FR-TP-6).
  */
-export function buildWords(questions: readonly Question[], limit = 4): WordItem[] {
+export function buildWords(
+  questions: readonly Question[],
+  limit = 4,
+): WordItem[] {
   const seen = new Set<string>();
   const words: WordItem[] = [];
   for (const q of questions) {
     if (q.type === "bs") continue;
+    // Susun Kata & Cari Kata mengeja kunci jawabannya huruf demi huruf.
+    if (punyaOpsiGambar(q)) continue;
     const word = answerOf(q).toUpperCase();
     if (!/^[A-Z]{4,10}$/.test(word) || seen.has(word)) continue;
     seen.add(word);
@@ -87,16 +111,32 @@ export interface Card {
   /** Gambar soal ikut ke sisi depan kartu bila ada. */
   gambar?: string;
   gambarAlt?: string;
+  /** Gambar kunci jawaban di sisi belakang, bila kuncinya berupa gambar. */
+  backGambar?: string;
+  backGambarAlt?: string;
 }
 
-/** Flashcard: teks soal di depan, kunci di belakang (blueprint.md §6). */
+/**
+ * Flashcard: teks soal di depan, kunci di belakang (blueprint.md §6).
+ *
+ * Berbeda dari Menjodohkan dan Susun Kata, kartu bisa memuat gambar — jadi soal
+ * yang kuncinya bergambar tidak perlu dilewati, kuncinya ikut ke sisi belakang.
+ */
 export function buildCards(questions: readonly Question[]): Card[] {
-  return questions.map((q) => ({
-    front: q.q.replace(/_{2,}/g, "…"),
-    back: answerOf(q) || "—",
-    gambar: q.gambar,
-    gambarAlt: q.gambarAlt,
-  }));
+  return questions.map((q) => {
+    const backGambar = answerGambarOf(q);
+    const teks = answerOf(q);
+    return {
+      front: q.q.replace(/_{2,}/g, "…"),
+      back: teks || (backGambar ? "" : "—"),
+      gambar: q.gambar,
+      gambarAlt: q.gambarAlt,
+      backGambar,
+      backGambarAlt: backGambar
+        ? altOpsi((q.opts ?? [])[q.correct ?? -1]!)
+        : undefined,
+    };
+  });
 }
 
 /** Jawaban isian dibandingkan tanpa peka huruf besar-kecil & spasi tepi (FR-PL-2). */

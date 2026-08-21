@@ -116,7 +116,4 @@ sedangkan `429` dan `5xx` diulang dengan jeda menaik berjitter.
 
 - **Berkas `.docx`** belum didukung; job yang memuatnya ditandai gagal dengan
   alasan yang terbaca di halaman admin, bukan dilewati diam-diam.
-- **Pilihan jawaban berupa gambar** sudah dipotong dan disimpan, tetapi belum
-  bisa ditampilkan di editor — soalnya ditandai perlu ditinjau agar gurunya
-  mengganti pilihan itu dengan teks.
 - **Metadata penggunaan token** dari penyedia belum dicatat.

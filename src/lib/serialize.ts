@@ -7,6 +7,7 @@ import type {
 import { TEMPLATES } from "./templates";
 import type {
   Activity,
+  Opsi,
   PlaySession,
   Question,
   QType,
@@ -26,12 +27,30 @@ function typeOf(v: string): QType {
   return v === "pg" || v === "bs" || v === "isian" ? v : "isian";
 }
 
+/**
+ * Satu pilihan dari JSON tersimpan.
+ *
+ * Baris lama menyimpan pilihan sebagai untai teks; yang baru boleh berupa objek
+ * bila pilihannya bergambar. Keduanya dibaca di sini supaya soal yang sudah
+ * tersimpan tidak perlu dimigrasi.
+ */
+function opsiDari(nilai: unknown): Opsi {
+  if (typeof nilai !== "object" || nilai === null) return String(nilai);
+
+  const o = nilai as Record<string, unknown>;
+  const teks = typeof o.teks === "string" ? o.teks : undefined;
+  const gambar = typeof o.gambar === "string" ? o.gambar : undefined;
+  const gambarAlt = typeof o.gambarAlt === "string" ? o.gambarAlt : undefined;
+  // Objek tanpa gambar tidak ada gunanya disimpan sebagai objek.
+  return gambar ? { teks, gambar, gambarAlt } : (teks ?? "");
+}
+
 export function soalDari(row: QuestionRow): Question {
-  let opts: string[] | undefined;
+  let opts: Opsi[] | undefined;
   if (row.opts) {
     try {
       const parsed: unknown = JSON.parse(row.opts);
-      if (Array.isArray(parsed)) opts = parsed.map(String);
+      if (Array.isArray(parsed)) opts = parsed.map(opsiDari);
     } catch {
       // Baris rusak tidak boleh menjatuhkan seluruh aktivitas.
       opts = undefined;
@@ -72,14 +91,20 @@ export function aktivitasDari(
     acak: row.acak,
     timerOn: row.timerOn,
     timerDetik: row.timerDetik,
-    visibility: (row.visibility === "public" ? "public" : "private") as Visibility,
+    visibility: (row.visibility === "public"
+      ? "public"
+      : "private") as Visibility,
     kelas: row.kelas,
     mapel: row.mapel,
     plays: row.plays,
     questions: row.questions.map(soalDari),
     createdAt: row.createdAt.getTime(),
     creator: opsi.sertakanEditSlug
-      ? { name: row.creatorName, email: row.creatorEmail, phone: row.creatorPhone }
+      ? {
+          name: row.creatorName,
+          email: row.creatorEmail,
+          phone: row.creatorPhone,
+        }
       : undefined,
   };
 }

@@ -376,6 +376,27 @@ versi prompt dan skema) karena tanpa itu hasil lama tidak bisa dijelaskan lagi
 setelah promptnya berubah. Isinya bisa diambil utuh lewat
 `GET /api/admin/unggahan/[id]/mentah`.
 
+### Pilihan jawaban berupa gambar
+
+Dokumen ujian kerap menaruh bangun datar atau diagram sebagai pilihan A/B/C/D.
+Potongannya diunggah worker, lalu kuncinya ikut tersimpan di dalam pilihan itu
+sendiri (`src/lib/types.ts`, tipe `Opsi`).
+
+Bentuk untai teks dipertahankan untuk pilihan biasa — itu bentuk hampir semua
+soal, dan mempertahankannya membuat soal lama tetap terbaca tanpa migrasi.
+
+Tiga mode yang seluruhnya berbasis teks — **Menjodohkan**, **Susun Kata**, dan
+**Cari Kata** — melewati soal semacam ini: keduanya menyandingkan atau mengeja
+kunci jawaban, dan pilihan bergambar tidak punya teks untuk dieja. Layar Pilih
+Template sudah menerangkan sendiri kenapa mode itu belum tersedia ("butuh ≥ 3
+pasangan kunci unik — baru ada 0"). **Flashcard** justru tidak melewatinya:
+kartunya boleh memuat gambar, jadi kunci bergambar tampil di sisi belakang.
+
+Gambar pilihan disajikan lewat rute proxy yang sama dengan gambar soal, dan
+ikut dihitung saat memeriksa penurunan konten maupun saat menyapu gambar yatim
+(`src/lib/unggah/pemakai.ts`) — tanpa itu, menurunkan aktivitas tidak
+menghentikan penyajian gambar pilihannya.
+
 ### Soal yang terpotong antarhalaman
 
 Satu soal bisa mulai di halaman N dan pilihannya ada di N+1. Model menandai
@@ -434,9 +455,6 @@ peramban ini (`src/lib/store.ts`).
 ## Yang belum ada
 
 - **Berkas `.docx`.** Worker menandai job yang memuatnya sebagai gagal.
-- **Pilihan jawaban berupa gambar.** Sudah dipotong dan disimpan, tetapi editor
-  hanya menyimpan pilihan sebagai teks — soalnya ditandai perlu ditinjau agar
-  gurunya mengganti pilihan itu dengan teks.
 - **Potongan sumber di layar Review.** Potongan satu soal utuh sudah disimpan,
   tetapi belum ditampilkan berdampingan dengan hasil ekstraksinya untuk guru;
   saat ini baru bisa dilihat admin.

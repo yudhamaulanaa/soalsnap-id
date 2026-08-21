@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { contohBankSoal } from "../ai/mockParser";
 import { validateQuestions } from "../ai/parser";
-import { answerOf, buildCards, buildPairs, buildWords, isianBenar } from "../derive";
+import {
+  answerOf,
+  buildCards,
+  buildPairs,
+  buildWords,
+  isianBenar,
+} from "../derive";
 import { eligibility, recommendedTemplate, templateCount } from "../templates";
 import { generateGrid, lineBetween, matchWord } from "../wordsearch";
 import type { Question } from "../types";
@@ -50,6 +56,58 @@ describe("derive", () => {
     expect(cards[7].back).toBe("oksigen");
   });
 
+  it("melewati soal berpilihan gambar di Menjodohkan dan Susun Kata", () => {
+    // Kedua mode itu menyandingkan atau mengeja teks; pilihan yang hanya gambar
+    // tidak punya teks, jadi soalnya dilewati alih-alih tampil kosong.
+    const bergambar: Question = {
+      id: "g1",
+      type: "pg",
+      q: "Manakah bangun datar yang simetris?",
+      opts: [
+        { gambar: "soal/a.webp", gambarAlt: "segitiga" },
+        { gambar: "soal/b.webp" },
+      ],
+      correct: 0,
+      conf: 95,
+      sumber: "upload",
+    };
+    expect(buildPairs([bergambar])).toEqual([]);
+    expect(buildWords([bergambar])).toEqual([]);
+  });
+
+  it("membawa gambar kunci ke sisi belakang flashcard", () => {
+    // Flashcard boleh memuat gambar, jadi soalnya tidak perlu dilewati —
+    // yang keliru justru menampilkan jawaban kosong.
+    const bergambar: Question = {
+      id: "g2",
+      type: "pg",
+      q: "Manakah yang simetris?",
+      opts: [{ gambar: "soal/a.webp", gambarAlt: "segitiga" }, "Bukan"],
+      correct: 0,
+      conf: 95,
+      sumber: "upload",
+    };
+    const [kartu] = buildCards([bergambar]);
+    expect(kartu.backGambar).toBe("soal/a.webp");
+    expect(kartu.backGambarAlt).toBe("segitiga");
+    expect(kartu.back).toBe("");
+  });
+
+  it("tetap memakai teks pilihan bergambar bila ada", () => {
+    const campuran: Question = {
+      id: "g3",
+      type: "pg",
+      q: "Mana segitiga?",
+      opts: [{ teks: "Segitiga", gambar: "soal/a.webp" }, "Lingkaran"],
+      correct: 0,
+      conf: 95,
+      sumber: "upload",
+    };
+    expect(answerOf(campuran)).toBe("Segitiga");
+    // Punya teks pun, sisi kanannya tetap gambar — Menjodohkan melewatinya.
+    expect(buildPairs([campuran])).toEqual([]);
+  });
+
   it("membandingkan isian tanpa peka huruf besar-kecil dan spasi tepi", () => {
     expect(isianBenar("  Oksigen ", "oksigen")).toBe(true);
     expect(isianBenar("karbon", "oksigen")).toBe(false);
@@ -79,7 +137,9 @@ describe("templates", () => {
   it("menyarankan template dari komposisi tipe soal", () => {
     expect(recommendedTemplate(bank)).toBe("kuis");
     expect(recommendedTemplate(bank.filter((q) => q.type === "bs"))).toBe("bs");
-    expect(recommendedTemplate(bank.filter((q) => q.type === "isian"))).toBe("isian");
+    expect(recommendedTemplate(bank.filter((q) => q.type === "isian"))).toBe(
+      "isian",
+    );
   });
 });
 
@@ -92,7 +152,14 @@ describe("validasi keluaran AI", () => {
 
   it("menandai soal cacat tanpa membuangnya", () => {
     const cacat: Question[] = [
-      { id: "a", type: "pg", q: "Tanpa opsi", opts: [], conf: 99, sumber: "manual" },
+      {
+        id: "a",
+        type: "pg",
+        q: "Tanpa opsi",
+        opts: [],
+        conf: 99,
+        sumber: "manual",
+      },
       { id: "b", type: "isian", q: "Tanpa kunci", conf: 99, sumber: "manual" },
     ];
     const hasil = validateQuestions(cacat);
@@ -132,7 +199,9 @@ describe("cari kata", () => {
     const grid = generateGrid(kata, 10, rng(3));
     const target = grid.placed[0];
     expect(matchWord(grid, target.cells, [])?.word).toBe(target.word);
-    expect(matchWord(grid, [...target.cells].reverse(), [])?.word).toBe(target.word);
+    expect(matchWord(grid, [...target.cells].reverse(), [])?.word).toBe(
+      target.word,
+    );
     expect(matchWord(grid, target.cells, [target.word])).toBeUndefined();
   });
 });

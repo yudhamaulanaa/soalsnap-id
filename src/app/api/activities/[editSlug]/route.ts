@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { asalAplikasi } from "@/lib/asal";
 import { prisma } from "@/lib/db";
 import { kirimTautanKePembuat } from "@/lib/email/kirim";
+import { kunciGambarBaris } from "@/lib/unggah/pemakai";
 import { sapuGambar } from "@/lib/unggah/sapu";
 import { aktivitasDari, sesiDari, soalKeBaris } from "@/lib/serialize";
 import { pesanValidasi, ubahAktivitasSchema } from "@/lib/validasi";
@@ -17,7 +18,10 @@ export async function GET(_request: Request, { params }: Ctx) {
     include: { questions: { orderBy: { urutan: "asc" } } },
   });
   if (!activity) {
-    return NextResponse.json({ error: "Aktivitas tidak ditemukan" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Aktivitas tidak ditemukan" },
+      { status: 404 },
+    );
   }
 
   const sessions = await prisma.playSession.findMany({
@@ -45,13 +49,22 @@ export async function PATCH(request: Request, { params }: Ctx) {
 
   const hasil = ubahAktivitasSchema.safeParse(body);
   if (!hasil.success) {
-    return NextResponse.json({ error: pesanValidasi(hasil.error) }, { status: 400 });
+    return NextResponse.json(
+      { error: pesanValidasi(hasil.error) },
+      { status: 400 },
+    );
   }
   const data = hasil.data;
 
-  const ada = await prisma.activity.findUnique({ where: { editSlug }, select: { id: true } });
+  const ada = await prisma.activity.findUnique({
+    where: { editSlug },
+    select: { id: true },
+  });
   if (!ada) {
-    return NextResponse.json({ error: "Aktivitas tidak ditemukan" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Aktivitas tidak ditemukan" },
+      { status: 404 },
+    );
   }
 
   // Soal ditulis ulang seluruhnya agar urutan dan penghapusan ikut tersimpan.
@@ -101,15 +114,18 @@ export async function DELETE(_request: Request, { params }: Ctx) {
   const { editSlug } = await params;
   const ada = await prisma.activity.findUnique({
     where: { editSlug },
-    select: { id: true, questions: { select: { gambar: true } } },
+    select: { id: true, questions: { select: { gambar: true, opts: true } } },
   });
   if (!ada) {
-    return NextResponse.json({ error: "Aktivitas tidak ditemukan" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Aktivitas tidak ditemukan" },
+      { status: 404 },
+    );
   }
 
   await prisma.activity.delete({ where: { id: ada.id } });
   // Setelah barisnya hilang, gambarnya tidak boleh tertinggal di penyimpanan.
-  await sapuGambar(ada.questions.map((q) => q.gambar));
+  await sapuGambar(ada.questions.flatMap(kunciGambarBaris));
 
   return NextResponse.json({ ok: true });
 }

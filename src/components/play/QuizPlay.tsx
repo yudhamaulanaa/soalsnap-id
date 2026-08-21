@@ -2,8 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { isianBenar, shuffle } from "@/lib/derive";
-import { TIMER_KUIS_CEPAT, type Question } from "@/lib/types";
+import {
+  TIMER_KUIS_CEPAT,
+  altOpsi,
+  gambarOpsi,
+  teksOpsi,
+  type Question,
+} from "@/lib/types";
 import type { ModeProps } from "./types";
+import { GambarOpsi } from "../GambarOpsi";
 import { GambarSoal } from "../GambarSoal";
 
 type Hasil = "benar" | "salah" | "habis" | null;
@@ -37,7 +44,15 @@ export function QuizPlay({ questions, activity, report }: ModeProps) {
 
   const soal = daftar[Math.min(idx, daftar.length - 1)];
   const total = daftar.length;
-  const kunciTeks = soal?.type === "isian" ? (soal.key ?? "") : (soal?.opts?.[soal.correct ?? -1] ?? "");
+  // Kunci bergambar tidak punya teks; yang diumumkan cukup hurufnya.
+  const opsiKunci =
+    soal?.type === "isian" ? undefined : soal?.opts?.[soal?.correct ?? -1];
+  const kunciTeks =
+    soal?.type === "isian"
+      ? (soal.key ?? "")
+      : opsiKunci === undefined
+        ? ""
+        : teksOpsi(opsiKunci) || `pilihan ${"ABCD"[soal?.correct ?? -1] ?? ""}`;
 
   useEffect(() => {
     report({
@@ -114,7 +129,8 @@ export function QuizPlay({ questions, activity, report }: ModeProps) {
             className="h-full rounded-full transition-[width] duration-1000 ease-linear"
             style={{
               width: `${Math.max(0, (sisa / durasi) * 100)}%`,
-              background: sisa <= 5 ? "var(--color-score)" : "var(--color-mint)",
+              background:
+                sisa <= 5 ? "var(--color-score)" : "var(--color-mint)",
             }}
           />
         </div>
@@ -135,6 +151,8 @@ export function QuizPlay({ questions, activity, report }: ModeProps) {
           <div className="grid gap-3 sm:grid-cols-2">
             {(soal.opts ?? []).map((o, i) => {
               const kunci = i === soal.correct;
+              const huruf = "ABCD"[i] ?? "";
+              const gambar = gambarOpsi(o);
               let kelas =
                 "border-2 border-line bg-surface text-ink hover:border-teal hover:-translate-y-0.5";
               if (terungkap) {
@@ -152,9 +170,21 @@ export function QuizPlay({ questions, activity, report }: ModeProps) {
                   onClick={() => jawab(kunci, i)}
                   className={`min-h-[44px] rounded-2xl px-5 py-[18px] text-left text-[17px] font-semibold transition-all disabled:cursor-default ${kelas}`}
                 >
-                  {terungkap && kunci ? "✓  " : ""}
-                  {soal.type === "pg" ? `${"ABCD"[i] ?? ""}.  ` : ""}
-                  {o}
+                  {/* Huruf pilihan mendahului gambarnya, sama seperti di
+                      layar Review — labelnya milik gambar di bawahnya. */}
+                  <span className="block">
+                    {terungkap && kunci ? "✓  " : ""}
+                    {soal.type === "pg" ? `${huruf}.  ` : ""}
+                    {teksOpsi(o)}
+                  </span>
+                  {gambar && (
+                    <GambarOpsi
+                      kunci={gambar}
+                      alt={altOpsi(o)}
+                      label={huruf}
+                      className="mt-2 h-28"
+                    />
+                  )}
                 </button>
               );
             })}
@@ -191,7 +221,9 @@ export function QuizPlay({ questions, activity, report }: ModeProps) {
           <p
             role="status"
             className={`m-0 animate-popin-fast self-center rounded-full px-[22px] py-2.5 text-[15px] font-bold ${
-              hasil === "benar" ? "bg-teal-light text-teal-dark" : "bg-wrong-bg text-wrong-fg"
+              hasil === "benar"
+                ? "bg-teal-light text-teal-dark"
+                : "bg-wrong-bg text-wrong-fg"
             }`}
           >
             {pesan}

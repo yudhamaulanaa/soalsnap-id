@@ -1,8 +1,10 @@
 "use client";
 
 import { EditorGambar } from "./EditorGambar";
+import { GambarOpsi } from "./GambarOpsi";
 import { GambarSoal } from "./GambarSoal";
 import { SampahIcon } from "./Icons";
+import { altOpsi, gambarOpsi, opsiTeks, teksOpsi } from "@/lib/types";
 import type { Question } from "@/lib/types";
 
 const BADGE: Record<Question["type"], string> = {
@@ -33,14 +35,25 @@ export function QuestionCard({
 
   function setOpsi(i: number, teks: string) {
     const opts = [...(q.opts ?? [])];
-    opts[i] = teks;
+    const lama = opts[i];
+    if (lama === undefined) return;
+    opts[i] = opsiTeks(lama, teks);
+    onChange({ opts });
+  }
+
+  /** Melepas gambar dari satu pilihan, menyisakan teksnya saja. */
+  function hapusGambarOpsi(i: number) {
+    const opts = [...(q.opts ?? [])];
+    opts[i] = teksOpsi(opts[i]!);
     onChange({ opts });
   }
 
   return (
     <article
       className={`rounded-[18px] p-5 ${
-        q.low ? "border-[1.5px] border-risk-line bg-risk-bg" : "border border-line bg-surface"
+        q.low
+          ? "border-[1.5px] border-risk-line bg-risk-bg"
+          : "border border-line bg-surface"
       }`}
     >
       <header className="flex flex-wrap items-center gap-2">
@@ -88,49 +101,81 @@ export function QuestionCard({
           className="mt-3 block min-h-16 w-full resize-y rounded-[10px] border-[1.5px] border-teal px-3 py-2.5 text-[15px] leading-[1.5] outline-none"
         />
       ) : (
-        <p className="m-0 mt-3 text-base font-semibold leading-[1.5] text-pretty">{q.q}</p>
+        <p className="m-0 mt-3 text-base font-semibold leading-[1.5] text-pretty">
+          {q.q}
+        </p>
       )}
 
       {editing ? (
-        <EditorGambar gambar={q.gambar} gambarAlt={q.gambarAlt} nomor={no} onChange={onChange} />
+        <EditorGambar
+          gambar={q.gambar}
+          gambarAlt={q.gambarAlt}
+          nomor={no}
+          onChange={onChange}
+        />
       ) : (
-        q.gambar && <GambarSoal kunci={q.gambar} alt={q.gambarAlt} className="mt-3" />
+        q.gambar && (
+          <GambarSoal kunci={q.gambar} alt={q.gambarAlt} className="mt-3" />
+        )
       )}
 
       {!isIsian && (
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           {(q.opts ?? []).map((o, i) => {
             const kunci = i === q.correct;
-            const prefix = q.type === "pg" ? `${"ABCD"[i] ?? ""}.  ` : "";
+            const huruf = "ABCD"[i] ?? "";
+            const prefix = q.type === "pg" ? `${huruf}.  ` : "";
+            const gambar = gambarOpsi(o);
+            const teks = teksOpsi(o);
             return editing ? (
               // Kotak mode edit dibuat setinggi kotak baca agar tinggi kartu
               // tidak berubah saat masuk/keluar mode edit.
               <div
                 key={i}
-                className={`flex items-center gap-2 rounded-[11px] border-[1.5px] px-3.5 py-[11px] text-sm font-semibold ${
+                className={`flex flex-col gap-2 rounded-[11px] border-[1.5px] px-3.5 py-[11px] text-sm font-semibold ${
                   kunci
                     ? "border-teal bg-teal-light text-teal-dark"
                     : "border-line bg-surface text-ink-2"
                 }`}
               >
-                {/* FR-RV-4: menandai kunci melepas kunci sebelumnya. */}
-                <button
-                  type="button"
-                  onClick={() => onChange({ correct: i })}
-                  title="Jadikan kunci jawaban"
-                  aria-label={`Jadikan opsi ${i + 1} kunci jawaban`}
-                  className={`grid h-4 w-4 shrink-0 place-items-center rounded-full text-[10px] leading-none ${
-                    kunci ? "bg-teal text-surface" : "bg-fill-2 text-dim"
-                  }`}
-                >
-                  ✓
-                </button>
-                <input
-                  value={o}
-                  onChange={(e) => setOpsi(i, e.target.value)}
-                  aria-label={`Opsi ${i + 1}`}
-                  className="w-full bg-transparent p-0 text-sm font-semibold text-inherit outline-none"
-                />
+                {gambar && (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[12px] font-bold tracking-[.04em] text-dim">
+                      PILIHAN {huruf}
+                    </span>
+                    <GambarOpsi kunci={gambar} alt={altOpsi(o)} label={huruf} />
+                    <button
+                      type="button"
+                      onClick={() => hapusGambarOpsi(i)}
+                      className="self-start text-[11.5px] font-semibold text-dim underline-offset-2 hover:text-wrong hover:underline"
+                    >
+                      Hapus gambar pilihan ini
+                    </button>
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  {/* FR-RV-4: menandai kunci melepas kunci sebelumnya. */}
+                  <button
+                    type="button"
+                    onClick={() => onChange({ correct: i })}
+                    title="Jadikan kunci jawaban"
+                    aria-label={`Jadikan opsi ${i + 1} kunci jawaban`}
+                    className={`grid h-4 w-4 shrink-0 place-items-center rounded-full text-[10px] leading-none ${
+                      kunci ? "bg-teal text-surface" : "bg-fill-2 text-dim"
+                    }`}
+                  >
+                    ✓
+                  </button>
+                  <input
+                    value={teks}
+                    onChange={(e) => setOpsi(i, e.target.value)}
+                    aria-label={`Opsi ${i + 1}`}
+                    placeholder={
+                      gambar ? "Keterangan pilihan (boleh kosong)" : ""
+                    }
+                    className="w-full bg-transparent p-0 text-sm font-semibold text-inherit outline-none placeholder:font-medium placeholder:text-dim-2"
+                  />
+                </div>
               </div>
             ) : (
               <button
@@ -144,9 +189,21 @@ export function QuestionCard({
                     : "border-line bg-surface text-ink-2 hover:border-line-hover"
                 }`}
               >
-                {kunci ? "✓  " : ""}
-                {prefix}
-                {o}
+                {/* Huruf pilihan mendahului gambarnya: kalau ditaruh sesudah,
+                    labelnya terbaca seolah milik kotak berikutnya. */}
+                <span className="block">
+                  {kunci ? "✓  " : ""}
+                  {prefix}
+                  {teks}
+                </span>
+                {gambar && (
+                  <GambarOpsi
+                    kunci={gambar}
+                    alt={altOpsi(o)}
+                    label={huruf}
+                    className="mt-2"
+                  />
+                )}
               </button>
             );
           })}

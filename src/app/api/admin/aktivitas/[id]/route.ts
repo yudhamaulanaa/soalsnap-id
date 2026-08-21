@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { sesiAdminSah } from "@/lib/admin/sesi";
 import { prisma } from "@/lib/db";
+import { kunciGambarBaris } from "@/lib/unggah/pemakai";
 import { sapuGambar } from "@/lib/unggah/sapu";
 import { moderasiSchema, pesanValidasi } from "@/lib/validasi";
 
@@ -22,7 +23,10 @@ export async function PATCH(request: Request, { params }: Ctx) {
 
   const hasil = moderasiSchema.safeParse(body);
   if (!hasil.success) {
-    return NextResponse.json({ error: pesanValidasi(hasil.error) }, { status: 400 });
+    return NextResponse.json(
+      { error: pesanValidasi(hasil.error) },
+      { status: 400 },
+    );
   }
 
   const ada = await prisma.activity.findUnique({
@@ -30,7 +34,10 @@ export async function PATCH(request: Request, { params }: Ctx) {
     select: { id: true, takedownAt: true },
   });
   if (!ada) {
-    return NextResponse.json({ error: "Aktivitas tidak ditemukan" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Aktivitas tidak ditemukan" },
+      { status: 404 },
+    );
   }
 
   // Memulihkan hanya masuk akal untuk aktivitas yang memang pernah diturunkan;
@@ -52,7 +59,12 @@ export async function PATCH(request: Request, { params }: Ctx) {
             takedownAlasan: hasil.data.alasan?.trim() || null,
           }
         : { visibility: "public", takedownAt: null, takedownAlasan: null },
-    select: { id: true, visibility: true, takedownAt: true, takedownAlasan: true },
+    select: {
+      id: true,
+      visibility: true,
+      takedownAt: true,
+      takedownAlasan: true,
+    },
   });
 
   return NextResponse.json({ activity });
@@ -67,14 +79,17 @@ export async function DELETE(_request: Request, { params }: Ctx) {
 
   const ada = await prisma.activity.findUnique({
     where: { id },
-    select: { id: true, questions: { select: { gambar: true } } },
+    select: { id: true, questions: { select: { gambar: true, opts: true } } },
   });
   if (!ada) {
-    return NextResponse.json({ error: "Aktivitas tidak ditemukan" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Aktivitas tidak ditemukan" },
+      { status: 404 },
+    );
   }
 
   await prisma.activity.delete({ where: { id } });
-  await sapuGambar(ada.questions.map((q) => q.gambar));
+  await sapuGambar(ada.questions.flatMap(kunciGambarBaris));
 
   return NextResponse.json({ ok: true });
 }
