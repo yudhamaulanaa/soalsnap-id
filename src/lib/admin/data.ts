@@ -90,9 +90,9 @@ export async function daftarJob(status: string | undefined, halaman: number) {
             namaAsli: true,
             kind: true,
             halaman: true,
-            _count: { select: { halamanOcr: true } },
+            _count: { select: { halamanDokumen: true } },
             // Halaman pertama saja: cukup untuk memperlihatkan ada isinya.
-            halamanOcr: {
+            halamanDokumen: {
               take: 1,
               orderBy: { halaman: "asc" as const },
               select: { teks: true },
@@ -113,7 +113,7 @@ export async function jobLengkap(id: string) {
     include: {
       uploads: {
         orderBy: { urutan: "asc" },
-        include: { halamanOcr: { orderBy: { halaman: "asc" } } },
+        include: { halamanDokumen: { orderBy: { halaman: "asc" } } },
       },
     },
   });

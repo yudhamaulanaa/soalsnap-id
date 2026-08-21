@@ -1,0 +1,4 @@
+# Tambahan untuk jalur cadangan (ocr_worker.py):
+#   pip install -r requirements.txt -r requirements-ocr.txt
+paddlepaddle>=3.0
+paddleocr>=3.0
