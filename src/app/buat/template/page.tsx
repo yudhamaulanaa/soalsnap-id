@@ -68,6 +68,8 @@ export default function TemplatePage() {
             opts: q.opts,
             correct: q.correct,
             key: q.key,
+            gambar: q.gambar,
+            gambarAlt: q.gambarAlt,
             conf: q.conf,
             low: q.low,
             note: q.note,

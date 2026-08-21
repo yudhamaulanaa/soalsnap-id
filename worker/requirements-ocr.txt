@@ -1,4 +1,6 @@
 # Tambahan untuk jalur cadangan (ocr_worker.py):
 #   pip install -r requirements.txt -r requirements-ocr.txt
-paddlepaddle>=3.0
+# Paddle 3.3.1 currently fails on this CPU with a PIR/oneDNN runtime error.
+paddlepaddle==3.2.2
+numpy<2.4,>=1.24
 paddleocr>=3.0

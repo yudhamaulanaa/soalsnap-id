@@ -38,7 +38,11 @@ HEADERS = {"Authorization": f"Bearer {WORKER_TOKEN}"}
 
 def _post(jalur: str, muatan: dict[str, Any], timeout: int = 60) -> dict[str, Any]:
     res = requests.post(f"{APP_URL}{jalur}", json=muatan, headers=HEADERS, timeout=timeout)
-    res.raise_for_status()
+    try:
+        res.raise_for_status()
+    except requests.HTTPError as e:
+        detail = res.text[:500].replace("\n", " ")
+        raise requests.HTTPError(f"{e}; body={detail}", response=res) from e
     return res.json()
 
 
@@ -98,6 +102,33 @@ def kotak_piksel(bbox: dict[str, float], lebar: int, tinggi: int, padding: int) 
     if kanan - kiri < MIN_SISI_PX or bawah - atas < MIN_SISI_PX:
         return None
     return (kiri, atas, kanan, bawah)
+
+
+def _potong(teks: Any, batas: int) -> Any:
+    if isinstance(teks, str) and len(teks) > batas:
+        return teks[:batas]
+    return teks
+
+
+def normalisasi_ekstraksi(ekstraksi: dict[str, Any]) -> dict[str, Any]:
+    """Rapikan keluaran model agar tidak gagal hanya karena sedikit lewat batas schema."""
+    ekstraksi["warnings"] = [_potong(w, 300) for w in ekstraksi.get("warnings", [])[:30]]
+    for soal in ekstraksi.get("questions", [])[:60]:
+        soal["temp_id"] = str(soal.get("temp_id") or "q")[:80]
+        stem = soal.get("stem") if isinstance(soal.get("stem"), dict) else {}
+        stem["text"] = _potong(stem.get("text"), 4000)
+        soal["stem"] = stem
+        soal["review_reasons"] = [_potong(r, 200) for r in soal.get("review_reasons", [])[:20]]
+        for aset in soal.get("assets", [])[:12]:
+            aset["temp_id"] = str(aset.get("temp_id") or "a")[:80]
+            aset["alt_text"] = _potong(aset.get("alt_text"), 300)
+        for opsi in soal.get("options", [])[:10]:
+            opsi["key"] = str(opsi.get("key") or "?").strip()[:8]
+            opsi["text"] = _potong(opsi.get("text"), 2000)
+            for aset in opsi.get("assets", [])[:8]:
+                aset["temp_id"] = str(aset.get("temp_id") or "a")[:80]
+                aset["alt_text"] = _potong(aset.get("alt_text"), 300)
+    return ekstraksi
 
 
 def minta_izin(job_id: str, permintaan: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -201,7 +232,7 @@ def kerjakan(job: dict[str, Any]) -> None:
             )
             unggah(izin[0]["url"], webp, "image/webp")
 
-            ekstraksi = ekstrak_halaman(webp, nomor, total)
+            ekstraksi = normalisasi_ekstraksi(ekstrak_halaman(webp, nomor, total))
             potongan = potong_dan_unggah(job_id, b["key"], nomor, gambar, ekstraksi)
 
             _post(
