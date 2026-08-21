@@ -52,6 +52,7 @@ export default async function AdminUnggahanPage({ searchParams }: { searchParams
         <ul className="m-0 flex list-none flex-col gap-3 p-0">
           {baris.map((job) => {
             const halamanTerbaca = job.uploads.reduce((n, u) => n + u._count.halamanOcr, 0);
+            const cuplikan = job.uploads.find((u) => u.halamanOcr[0]?.teks)?.halamanOcr[0]?.teks;
             return (
               <li
                 key={job.id}
@@ -76,6 +77,14 @@ export default async function AdminUnggahanPage({ searchParams }: { searchParams
                   </p>
                 )}
 
+                {/* Cuplikan hasil baca: tanpa ini daftar tidak memperlihatkan
+                    bahwa ada isi yang bisa dibuka. */}
+                {cuplikan && (
+                  <p className="m-0 line-clamp-2 whitespace-pre-wrap rounded-xl bg-app px-4 py-2.5 font-mono text-[12.5px] leading-[1.6] text-ink-2">
+                    {cuplikan.slice(0, 240)}
+                  </p>
+                )}
+
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12.5px] text-dim">
                   <span>{job.uploads.length} berkas</span>
                   <span>{halamanTerbaca} halaman terbaca</span>
@@ -83,6 +92,13 @@ export default async function AdminUnggahanPage({ searchParams }: { searchParams
                   <span>Diunggah {formatWaktu(job.createdAt.getTime())}</span>
                   {job.workerId && <span>Worker {job.workerId}</span>}
                 </div>
+
+                <Link
+                  href={`/admin/unggahan/${job.id}`}
+                  className="self-start rounded-full border-[1.5px] border-line px-4 py-2 text-[13px] font-semibold text-ink-2 no-underline transition-colors hover:border-teal hover:text-teal hover:no-underline"
+                >
+                  {halamanTerbaca > 0 ? "Baca hasil OCR mentah →" : "Lihat rincian →"}
+                </Link>
               </li>
             );
           })}

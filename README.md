@@ -344,7 +344,9 @@ Statusnya berhenti di **`terbaca`**, bukan `selesai`: dokumennya sudah dibaca,
 tetapi belum disusun menjadi soal.
 
 Hasilnya bisa diperiksa di `/admin/unggahan` — teks per halaman, konfidensi tiap
-baris, dan posisi kotaknya. Halaman yang konfidensi terendahnya di bawah ambang
+baris, dan posisi kotaknya. Isinya juga bisa diambil utuh lewat
+`GET /api/admin/unggahan/[id]/mentah` (`?format=teks` untuk teks polos), berguna
+saat menyiapkan langkah penyusunan soal. Halaman yang konfidensi terendahnya di bawah ambang
 80 ditandai, sama seperti penandaan soal di layar Review.
 
 ## Pemrosesan AI
