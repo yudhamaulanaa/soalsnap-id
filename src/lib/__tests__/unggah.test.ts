@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { dipakaiOleh, kunciGambarBaris } from "../unggah/pemakai";
 import {
   MAX_BERKAS,
   MAX_UKURAN_BYTE,
@@ -68,8 +69,12 @@ describe("nama dan kunci objek", () => {
   });
 
   it("memberi awalan job dan urutan berpadding pada kunci", () => {
-    expect(kunciObjek("job123", 0, "soal.pdf")).toBe("unggahan/job123/00-soal.pdf");
-    expect(kunciObjek("job123", 11, "../rahasia")).toBe("unggahan/job123/11-rahasia");
+    expect(kunciObjek("job123", 0, "soal.pdf")).toBe(
+      "unggahan/job123/00-soal.pdf",
+    );
+    expect(kunciObjek("job123", 11, "../rahasia")).toBe(
+      "unggahan/job123/11-rahasia",
+    );
   });
 });
 
@@ -80,7 +85,9 @@ describe("pemeriksaan berkas", () => {
 
   it("menolak berkas kosong dan yang kelewat besar", () => {
     expect(periksaBerkas({ ...pdf, ukuran: 0 }).ok).toBe(false);
-    expect(periksaBerkas({ ...pdf, ukuran: MAX_UKURAN_BYTE + 1 }).ok).toBe(false);
+    expect(periksaBerkas({ ...pdf, ukuran: MAX_UKURAN_BYTE + 1 }).ok).toBe(
+      false,
+    );
     expect(periksaBerkas({ ...pdf, ukuran: MAX_UKURAN_BYTE }).ok).toBe(true);
   });
 
@@ -92,8 +99,12 @@ describe("pemeriksaan berkas", () => {
 
   it("menolak daftar kosong dan daftar kelewat panjang", () => {
     expect(periksaDaftar([]).ok).toBe(false);
-    expect(periksaDaftar(Array.from({ length: MAX_BERKAS }, () => pdf)).ok).toBe(true);
-    expect(periksaDaftar(Array.from({ length: MAX_BERKAS + 1 }, () => pdf)).ok).toBe(false);
+    expect(
+      periksaDaftar(Array.from({ length: MAX_BERKAS }, () => pdf)).ok,
+    ).toBe(true);
+    expect(
+      periksaDaftar(Array.from({ length: MAX_BERKAS + 1 }, () => pdf)).ok,
+    ).toBe(false);
   });
 
   it("mengembalikan jenis tiap berkas sesuai urutannya", () => {
@@ -157,5 +168,45 @@ describe("gambar soal", () => {
 
   it("menyajikan gambar lewat rute proxy, bukan URL bucket", () => {
     expect(urlGambar("soal/a1b2.png")).toBe("/api/gambar/soal/a1b2.png");
+  });
+});
+
+describe("kunci gambar yang dipakai satu baris soal", () => {
+  it("mengumpulkan gambar soal dan gambar pilihannya sekaligus", () => {
+    // Gambar pilihan tidak punya kolom sendiri; kalau terlewat di sini, objeknya
+    // tertinggal selamanya di penyimpanan setelah aktivitasnya dihapus.
+    expect(
+      kunciGambarBaris({
+        gambar: "soal/utama.webp",
+        opts: JSON.stringify([
+          { gambar: "soal/a.webp" },
+          { teks: "Lingkaran", gambar: "soal/b.webp" },
+          "Bujur sangkar",
+        ]),
+      }),
+    ).toEqual(["soal/utama.webp", "soal/a.webp", "soal/b.webp"]);
+  });
+
+  it("tidak menghasilkan apa-apa untuk soal teks biasa", () => {
+    expect(
+      kunciGambarBaris({ gambar: null, opts: JSON.stringify(["A", "B"]) }),
+    ).toEqual([]);
+    expect(kunciGambarBaris({ gambar: null, opts: null })).toEqual([]);
+  });
+
+  it("membiarkan gambar tertinggal daripada menghapusnya karena baris rusak", () => {
+    expect(
+      kunciGambarBaris({ gambar: "soal/utama.webp", opts: "{bukan json" }),
+    ).toEqual(["soal/utama.webp"]);
+  });
+});
+
+describe("pemakai satu kunci gambar", () => {
+  it("mencari di kolom gambar maupun di dalam JSON pilihan", () => {
+    // Tanda kutipnya penting: tanpa itu pencocokan bisa mengenai kunci lain
+    // yang namanya kebetulan memuat kunci ini.
+    expect(dipakaiOleh("soal/a.webp")).toEqual({
+      OR: [{ gambar: "soal/a.webp" }, { opts: { contains: '"soal/a.webp"' } }],
+    });
   });
 });

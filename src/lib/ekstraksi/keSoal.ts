@@ -1,4 +1,9 @@
-import { AMBANG_KEYAKINAN, type QType, type Question } from "../types";
+import {
+  AMBANG_KEYAKINAN,
+  type Opsi,
+  type QType,
+  type Question,
+} from "../types";
 import type { SoalGabungan } from "./gabung";
 import type { PeranAset, TipeSoalEkstraksi } from "./skema";
 
@@ -18,8 +23,14 @@ const PADANAN: Record<TipeSoalEkstraksi, { tipe: QType; catatan?: string }> = {
     tipe: "pg",
     catatan: "Sumbernya berjawaban ganda; aplikasi hanya menyimpan satu kunci",
   },
-  essay: { tipe: "isian", catatan: "Soal uraian — kunci jawabannya perlu diisi sendiri" },
-  unknown: { tipe: "isian", catatan: "Tipe soal tidak dikenali saat ekstraksi" },
+  essay: {
+    tipe: "isian",
+    catatan: "Soal uraian — kunci jawabannya perlu diisi sendiri",
+  },
+  unknown: {
+    tipe: "isian",
+    catatan: "Tipe soal tidak dikenali saat ekstraksi",
+  },
 };
 
 /** Gambar yang paling mewakili soal, diurut menurut kegunaannya bagi siswa. */
@@ -35,7 +46,8 @@ const URUTAN_PERAN: PeranAset[] = [
 function gambarUtama(soal: SoalGabungan): { kunci?: string; alt?: string } {
   for (const peran of URUTAN_PERAN) {
     const aset = soal.aset.find((a) => a.peran === peran && a.kunci);
-    if (aset?.kunci) return { kunci: aset.kunci, alt: aset.altText ?? undefined };
+    if (aset?.kunci)
+      return { kunci: aset.kunci, alt: aset.altText ?? undefined };
   }
   // Potongan soal utuh sengaja tidak dipakai di sini. Isinya memuat stem dan
   // pilihan sekaligus, sehingga akan tampil dobel dengan teksnya, dan soal
@@ -44,12 +56,23 @@ function gambarUtama(soal: SoalGabungan): { kunci?: string; alt?: string } {
   return {};
 }
 
-/** Teks pilihan; yang berupa gambar diberi penanda agar tidak tampil kosong. */
-function teksOpsi(soal: SoalGabungan): string[] {
+/**
+ * Pilihan jawaban; yang berupa gambar membawa kunci potongannya.
+ *
+ * Dokumen ujian kerap menaruh bangun datar atau diagram sebagai pilihan
+ * A/B/C/D. Potongannya sudah diunggah worker, jadi yang perlu dilakukan di sini
+ * hanya meneruskan kuncinya — bukan meratakannya menjadi teks.
+ */
+function daftarOpsi(soal: SoalGabungan): Opsi[] {
   return soal.opsi.map((o) => {
-    const teks = o.teks?.trim();
-    if (teks) return teks;
-    return o.jenisIsi === "text" ? "" : `(gambar pilihan ${o.kunci})`;
+    const teks = o.teks?.trim() ?? "";
+    const aset = o.aset.find((a) => a.kunci);
+    if (!aset?.kunci) return teks;
+    return {
+      teks: teks || undefined,
+      gambar: aset.kunci,
+      gambarAlt: aset.altText ?? undefined,
+    };
   });
 }
 
@@ -70,15 +93,20 @@ export function keQuestion(soal: SoalGabungan): Question {
   const alasan = [...soal.alasanTinjau];
   if (padanan.catatan) alasan.push(padanan.catatan);
 
-  const opsiBergambar = soal.opsi.some((o) => o.jenisIsi !== "text");
-  if (opsiBergambar) {
-    alasan.push("Pilihan jawaban berupa gambar belum bisa ditampilkan; ganti dengan teks");
+  // Pilihan bergambar yang potongannya tidak jadi terunggah akan tampil kosong,
+  // dan soalnya jadi tidak bisa dijawab — itu yang perlu ditinjau, bukan
+  // keberadaan gambarnya.
+  const gambarHilang = soal.opsi.some(
+    (o) => o.jenisIsi !== "text" && o.aset.every((a) => !a.kunci),
+  );
+  if (gambarHilang) {
+    alasan.push("Ada pilihan bergambar yang gambarnya tidak terpotong");
   }
 
   const conf = Math.round(soal.konfidensi * 100);
   const gambar = gambarUtama(soal);
   const perluTinjau = alasan.length > 0 || conf < AMBANG_KEYAKINAN;
-  const opts = padanan.tipe === "isian" ? undefined : teksOpsi(soal);
+  const opts = padanan.tipe === "isian" ? undefined : daftarOpsi(soal);
 
   return {
     id: soal.externalRef,
@@ -86,12 +114,18 @@ export function keQuestion(soal: SoalGabungan): Question {
     q: soal.stemTeks || "(teks soal tidak terbaca)",
     opts,
     correct: padanan.tipe === "isian" ? undefined : indeksKunci(soal),
-    key: padanan.tipe === "isian" ? (soal.kunciJawaban?.[0] ?? undefined) : undefined,
+    key:
+      padanan.tipe === "isian"
+        ? (soal.kunciJawaban?.[0] ?? undefined)
+        : undefined,
     gambar: gambar.kunci,
     gambarAlt: gambar.alt,
     conf,
     low: perluTinjau,
-    note: alasan.length > 0 ? `Perlu dilengkapi: ${[...new Set(alasan)].join("; ")}.` : undefined,
+    note:
+      alasan.length > 0
+        ? `Perlu dilengkapi: ${[...new Set(alasan)].join("; ")}.`
+        : undefined,
     page: soal.halamanDari,
     sumber: "upload",
   };

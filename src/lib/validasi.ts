@@ -10,10 +10,28 @@ import { TIMER_MAX, TIMER_MIN } from "./types";
 
 const templateIds = TEMPLATES.map((t) => t.id) as [string, ...string[]];
 
+/**
+ * Pilihan jawaban menerima dua bentuk: teks polos seperti selama ini, dan objek
+ * untuk pilihan bergambar. Kunci gambarnya diperiksa ruang namanya — sama
+ * seperti gambar soal — karena keduanya sama-sama datang dari klien.
+ */
+const opsiSchema = z.union([
+  z.string().max(500),
+  z.object({
+    teks: z.string().max(500).optional(),
+    gambar: z
+      .string()
+      .max(200)
+      .refine(kunciGambarSah, "Kunci gambar tidak sah")
+      .optional(),
+    gambarAlt: z.string().trim().max(300).optional(),
+  }),
+]);
+
 export const soalSchema = z.object({
   type: z.enum(["pg", "bs", "isian"]),
   q: z.string().trim().min(1, "Teks soal tidak boleh kosong").max(2000),
-  opts: z.array(z.string().max(500)).max(8).optional(),
+  opts: z.array(opsiSchema).max(8).optional(),
   correct: z.number().int().min(0).max(7).optional(),
   key: z.string().max(500).optional(),
   // Kunci datang dari klien, jadi ruang namanya diperiksa — bukan sekadar panjangnya.

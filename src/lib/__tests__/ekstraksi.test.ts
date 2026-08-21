@@ -484,7 +484,7 @@ describe("pemetaan ke tipe Question aplikasi", () => {
     expect(q.gambar).toBeUndefined();
   });
 
-  it("menandai pilihan bergambar yang belum bisa ditampilkan", () => {
+  it("meneruskan potongan pilihan bergambar, bukan meratakannya jadi teks", () => {
     const q = keQuestion(
       gabung({
         options: [
@@ -499,6 +499,7 @@ describe("pemetaan ke tipe Question aplikasi", () => {
                 role: "option_image",
                 bbox: kotak,
                 storage_key: "soal/a.webp",
+                alt_text: "segitiga",
               },
             ],
           },
@@ -519,9 +520,75 @@ describe("pemetaan ke tipe Question aplikasi", () => {
         ],
       }),
     );
-    expect(q.opts).toEqual(["(gambar pilihan A)", "(gambar pilihan B)"]);
-    expect(q.note).toContain("belum bisa ditampilkan");
+    expect(q.opts).toEqual([
+      { teks: undefined, gambar: "soal/a.webp", gambarAlt: "segitiga" },
+      { teks: undefined, gambar: "soal/b.webp", gambarAlt: undefined },
+    ]);
+    // Pilihan bergambar yang potongannya lengkap bukan lagi alasan tinjau.
+    expect(q.low).toBe(false);
+  });
+
+  it("mempertahankan teks pilihan yang punya teks sekaligus gambar", () => {
+    const q = keQuestion(
+      gabung({
+        options: [
+          {
+            key: "A",
+            text: "Segitiga",
+            content_type: "text_image",
+            bbox: null,
+            assets: [
+              {
+                temp_id: "o1",
+                role: "option_image",
+                bbox: kotak,
+                storage_key: "soal/a.webp",
+              },
+            ],
+          },
+          {
+            key: "B",
+            text: "Lingkaran",
+            content_type: "text",
+            bbox: null,
+            assets: [],
+          },
+        ],
+      }),
+    );
+    expect(q.opts?.[0]).toEqual({
+      teks: "Segitiga",
+      gambar: "soal/a.webp",
+      gambarAlt: undefined,
+    });
+    // Pilihan tanpa gambar tetap untai teks biasa, bukan objek.
+    expect(q.opts?.[1]).toBe("Lingkaran");
+  });
+
+  it("menandai pilihan bergambar yang potongannya tidak jadi terunggah", () => {
+    const q = keQuestion(
+      gabung({
+        options: [
+          {
+            key: "A",
+            text: null,
+            content_type: "image",
+            bbox: null,
+            assets: [{ temp_id: "o1", role: "option_image", bbox: kotak }],
+          },
+          {
+            key: "B",
+            text: "Lingkaran",
+            content_type: "text",
+            bbox: null,
+            assets: [],
+          },
+        ],
+      }),
+    );
+    expect(q.opts?.[0]).toBe("");
     expect(q.low).toBe(true);
+    expect(q.note).toContain("tidak terpotong");
   });
 
   it("membawa halaman asal sebagai provenance", () => {

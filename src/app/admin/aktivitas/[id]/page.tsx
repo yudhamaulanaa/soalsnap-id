@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { AksiLaporan } from "@/components/admin/AksiLaporan";
 import { AksiModerasi } from "@/components/admin/AksiModerasi";
 import { StatusBadge } from "@/components/admin/StatusBadge";
+import { GambarOpsi } from "@/components/GambarOpsi";
 import { GambarSoal } from "@/components/GambarSoal";
 import { aktivitasLengkap } from "@/lib/admin/data";
 import { pastikanAdmin } from "@/lib/admin/sesi";
@@ -10,6 +11,7 @@ import { formatWaktu } from "@/lib/format";
 import { labelAlasan, labelStatus } from "@/lib/laporan";
 import { soalDari, templateOf } from "@/lib/serialize";
 import { templateLabel } from "@/lib/templates";
+import { altOpsi, gambarOpsi, teksOpsi } from "@/lib/types";
 import type { Question } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -38,13 +40,15 @@ export default async function AdminDetailPage({ params }: Ctx) {
           ← Semua aktivitas
         </Link>
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="m-0 font-display text-[28px] font-extrabold">{a.title}</h1>
+          <h1 className="m-0 font-display text-[28px] font-extrabold">
+            {a.title}
+          </h1>
           <StatusBadge publik={publik} diturunkan={diturunkan} />
         </div>
         <p className="m-0 text-[14px] text-ink-3">
           {templateLabel(templateOf(a.template))} · {a.questions.length} soal ·{" "}
-          {[a.kelas, a.mapel].filter(Boolean).join(" · ") || "tanpa kategori"} · dibuat{" "}
-          {formatWaktu(a.createdAt.getTime())}
+          {[a.kelas, a.mapel].filter(Boolean).join(" · ") || "tanpa kategori"} ·
+          dibuat {formatWaktu(a.createdAt.getTime())}
         </p>
       </div>
 
@@ -52,7 +56,9 @@ export default async function AdminDetailPage({ params }: Ctx) {
         <section className="flex flex-col gap-3">
           <h2 className="m-0 font-display text-[19px] font-bold">Isi soal</h2>
           {a.questions.length === 0 ? (
-            <p className="m-0 text-[14.5px] text-ink-3">Aktivitas ini belum punya soal.</p>
+            <p className="m-0 text-[14.5px] text-ink-3">
+              Aktivitas ini belum punya soal.
+            </p>
           ) : (
             <ol className="m-0 flex list-none flex-col gap-3 p-0">
               {a.questions.map((row, i) => (
@@ -80,11 +86,16 @@ export default async function AdminDetailPage({ params }: Ctx) {
 
           <Panel judul={`Laporan (${a.reports.length})`}>
             {a.reports.length === 0 ? (
-              <p className="m-0 text-[13.5px] text-ink-3">Belum ada laporan atas aktivitas ini.</p>
+              <p className="m-0 text-[13.5px] text-ink-3">
+                Belum ada laporan atas aktivitas ini.
+              </p>
             ) : (
               <ul className="m-0 flex list-none flex-col gap-3 p-0">
                 {a.reports.map((l) => (
-                  <li key={l.id} className="flex flex-col gap-2 rounded-xl bg-app px-4 py-3">
+                  <li
+                    key={l.id}
+                    className="flex flex-col gap-2 rounded-xl bg-app px-4 py-3"
+                  >
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-display text-[14px] font-bold">
                         {labelAlasan(l.alasan)}
@@ -100,7 +111,9 @@ export default async function AdminDetailPage({ params }: Ctx) {
                       </span>
                     </div>
                     {l.catatan && (
-                      <p className="m-0 text-[13px] text-ink-2 text-pretty">“{l.catatan}”</p>
+                      <p className="m-0 text-[13px] text-ink-2 text-pretty">
+                        “{l.catatan}”
+                      </p>
                     )}
                     <span className="text-[12px] text-dim">
                       {formatWaktu(l.createdAt.getTime())}
@@ -119,8 +132,8 @@ export default async function AdminDetailPage({ params }: Ctx) {
               <Baris label="Telepon" nilai={a.creatorPhone} />
             </dl>
             <p className="m-0 mt-3 text-[12px] text-dim">
-              Kontak ini hanya untuk menindaklanjuti penyalahgunaan. Tautan sunting pemilik
-              sengaja tidak ditampilkan di sini.
+              Kontak ini hanya untuk menindaklanjuti penyalahgunaan. Tautan
+              sunting pemilik sengaja tidak ditampilkan di sini.
             </p>
           </Panel>
 
@@ -135,12 +148,19 @@ export default async function AdminDetailPage({ params }: Ctx) {
               </Link>
             </p>
             {a.sessions.length === 0 ? (
-              <p className="m-0 text-[13.5px] text-ink-3">Belum ada yang mengerjakan.</p>
+              <p className="m-0 text-[13.5px] text-ink-3">
+                Belum ada yang mengerjakan.
+              </p>
             ) : (
               <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-[13px]">
                 {a.sessions.slice(0, 10).map((s) => (
-                  <li key={s.id} className="flex items-center justify-between gap-3">
-                    <span className="truncate">{s.playerName || "Tanpa nama"}</span>
+                  <li
+                    key={s.id}
+                    className="flex items-center justify-between gap-3"
+                  >
+                    <span className="truncate">
+                      {s.playerName || "Tanpa nama"}
+                    </span>
                     <span className="shrink-0 tabular-nums text-ink-3">
                       {s.score}/{s.total}
                     </span>
@@ -161,7 +181,13 @@ export default async function AdminDetailPage({ params }: Ctx) {
   );
 }
 
-function Panel({ judul, children }: { judul: string; children: React.ReactNode }) {
+function Panel({
+  judul,
+  children,
+}: {
+  judul: string;
+  children: React.ReactNode;
+}) {
   return (
     <section className="rounded-panel border border-line bg-surface p-5">
       <h2 className="m-0 mb-3 font-display text-[15px] font-bold">{judul}</h2>
@@ -174,7 +200,9 @@ function Baris({ label, nilai }: { label: string; nilai: string | null }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
       <dt className="text-dim">{label}</dt>
-      <dd className="m-0 truncate text-right font-semibold text-ink-2">{nilai || "—"}</dd>
+      <dd className="m-0 truncate text-right font-semibold text-ink-2">
+        {nilai || "—"}
+      </dd>
     </div>
   );
 }
@@ -189,7 +217,9 @@ function KartuSoal({ nomor, soal }: { nomor: number; soal: Question }) {
   return (
     <li className="rounded-panel border border-line bg-surface p-5">
       <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-bold tracking-[.06em]">
-        <span className="rounded-full bg-fill-2 px-2.5 py-1 text-ink-3">SOAL {nomor}</span>
+        <span className="rounded-full bg-fill-2 px-2.5 py-1 text-ink-3">
+          SOAL {nomor}
+        </span>
         <span className="rounded-full bg-ai-light px-2.5 py-1 text-ai">
           {LABEL_TIPE[soal.type].toUpperCase()}
         </span>
@@ -198,41 +228,66 @@ function KartuSoal({ nomor, soal }: { nomor: number; soal: Question }) {
             KEYAKINAN {soal.conf}
           </span>
         )}
-        {soal.page && <span className="rounded-full bg-app px-2.5 py-1 text-dim">HAL {soal.page}</span>}
+        {soal.page && (
+          <span className="rounded-full bg-app px-2.5 py-1 text-dim">
+            HAL {soal.page}
+          </span>
+        )}
       </div>
 
-      <p className="m-0 font-display text-[16px] font-bold text-pretty">{soal.q}</p>
+      <p className="m-0 font-display text-[16px] font-bold text-pretty">
+        {soal.q}
+      </p>
 
       {/* Gambar ikut ditinjau: soal bergambar bisa disalahgunakan justru lewat
           gambarnya, dan audit yang hanya membaca teks tidak akan melihatnya. */}
-      {soal.gambar && <GambarSoal kunci={soal.gambar} alt={soal.gambarAlt} className="mt-3" />}
+      {soal.gambar && (
+        <GambarSoal kunci={soal.gambar} alt={soal.gambarAlt} className="mt-3" />
+      )}
 
       {soal.opts && soal.opts.length > 0 && (
         <ul className="m-0 mt-3 flex list-none flex-col gap-1.5 p-0">
-          {soal.opts.map((o, i) => (
-            <li
-              key={i}
-              className={`rounded-[10px] px-3 py-2 text-[14px] ${
-                i === soal.correct
-                  ? "bg-teal-light font-semibold text-teal-dark"
-                  : "bg-app text-ink-2"
-              }`}
-            >
-              {String.fromCharCode(97 + i)}. {o}
-              {i === soal.correct && " ✓"}
-            </li>
-          ))}
+          {soal.opts.map((o, i) => {
+            const gambar = gambarOpsi(o);
+            return (
+              <li
+                key={i}
+                className={`rounded-[10px] px-3 py-2 text-[14px] ${
+                  i === soal.correct
+                    ? "bg-teal-light font-semibold text-teal-dark"
+                    : "bg-app text-ink-2"
+                }`}
+              >
+                {/* Pilihan bergambar ikut ditinjau: penyalahgunaan bisa
+                    bersembunyi di gambar pilihan, bukan hanya di gambar soal. */}
+                {gambar && (
+                  <GambarOpsi
+                    kunci={gambar}
+                    alt={altOpsi(o)}
+                    label={String.fromCharCode(65 + i)}
+                    className="mb-1.5 w-40"
+                  />
+                )}
+                {String.fromCharCode(97 + i)}. {teksOpsi(o)}
+                {i === soal.correct && " ✓"}
+              </li>
+            );
+          })}
         </ul>
       )}
 
       {soal.type === "isian" && (
         <p className="m-0 mt-3 text-[14px]">
           <span className="text-dim">Kunci: </span>
-          <span className="font-semibold text-teal-dark">{soal.key || "—"}</span>
+          <span className="font-semibold text-teal-dark">
+            {soal.key || "—"}
+          </span>
         </p>
       )}
 
-      {soal.note && <p className="m-0 mt-2 text-[13px] text-warn-fg">{soal.note}</p>}
+      {soal.note && (
+        <p className="m-0 mt-2 text-[13px] text-warn-fg">{soal.note}</p>
+      )}
     </li>
   );
 }

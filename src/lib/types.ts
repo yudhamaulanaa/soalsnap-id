@@ -17,13 +17,62 @@ export type TemplateId =
 /** Mode main yang benar-benar berbeda mekaniknya. */
 export type PlayMode = "kuis" | "jodoh" | "flash" | "susun" | "cari";
 
+/**
+ * Satu pilihan jawaban.
+ *
+ * Bentuk `string` berarti pilihan teks biasa — itu bentuk yang dipakai hampir
+ * semua soal, dan mempertahankannya membuat soal lama serta baris yang sudah
+ * tersimpan tetap terbaca tanpa migrasi.
+ *
+ * Bentuk objek dipakai saat pilihannya berupa gambar: dokumen ujian kerap
+ * menaruh bangun datar atau diagram sebagai pilihan A/B/C/D, dan memaksanya
+ * menjadi teks berarti soalnya tidak bisa dijawab.
+ */
+export type Opsi = string | OpsiObjek;
+
+export interface OpsiObjek {
+  teks?: string;
+  /** Kunci objek gambar pilihan di R2. */
+  gambar?: string;
+  /** Teks alternatif gambar pilihan, untuk pembaca layar. */
+  gambarAlt?: string;
+}
+
+/** Teks satu pilihan; kosong berarti pilihannya murni gambar. */
+export function teksOpsi(o: Opsi): string {
+  return (typeof o === "string" ? o : (o.teks ?? "")).trim();
+}
+
+export function gambarOpsi(o: Opsi): string | undefined {
+  return typeof o === "string" ? undefined : o.gambar;
+}
+
+export function altOpsi(o: Opsi): string | undefined {
+  return typeof o === "string" ? undefined : o.gambarAlt;
+}
+
+/** Mengubah pilihan menjadi teks saja — dipakai saat gurunya menyunting. */
+export function opsiTeks(o: Opsi, teks: string): Opsi {
+  if (typeof o === "string") return teks;
+  const { gambar, gambarAlt } = o;
+  return gambar ? { teks, gambar, gambarAlt } : teks;
+}
+
+/**
+ * Soal yang salah satu pilihannya berupa gambar. Mode yang seluruhnya berbasis
+ * teks — Menjodohkan, Susun Kata, Cari Kata — melewatinya.
+ */
+export function punyaOpsiGambar(q: Question): boolean {
+  return (q.opts ?? []).some((o) => gambarOpsi(o) !== undefined);
+}
+
 export interface Question {
   id: string;
   type: QType;
   /** Teks pertanyaan. */
   q: string;
   /** Opsi jawaban — wajib ≥ 2 untuk `pg` (FR-AI-6). */
-  opts?: string[];
+  opts?: Opsi[];
   /** Kunci jawaban untuk `pg`/`bs` — indeks ke `opts`. */
   correct?: number;
   /** Kunci jawaban teks untuk `isian`. */

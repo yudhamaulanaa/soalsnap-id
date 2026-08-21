@@ -63,11 +63,26 @@ export function FlashcardPlay({ questions, activity, report }: ModeProps) {
           {belakang ? "JAWABAN" : "PERTANYAAN"}
         </span>
         {!belakang && kartu.gambar && (
-          <GambarSoal kunci={kartu.gambar} alt={kartu.gambarAlt} className="max-h-[200px]" />
+          <GambarSoal
+            kunci={kartu.gambar}
+            alt={kartu.gambarAlt}
+            className="max-h-[200px]"
+          />
         )}
-        <span className="font-display text-[26px] font-bold leading-[1.4] text-pretty">
-          {belakang ? kartu.back : kartu.front}
-        </span>
+        {/* Kunci yang berupa gambar ikut ke sisi belakang: tanpa ini kartunya
+            memperlihatkan jawaban kosong. */}
+        {belakang && kartu.backGambar && (
+          <GambarSoal
+            kunci={kartu.backGambar}
+            alt={kartu.backGambarAlt ?? "Gambar jawaban"}
+            className="max-h-[200px] bg-surface"
+          />
+        )}
+        {(belakang ? kartu.back : kartu.front) && (
+          <span className="font-display text-[26px] font-bold leading-[1.4] text-pretty">
+            {belakang ? kartu.back : kartu.front}
+          </span>
+        )}
         <span className="text-[12.5px] font-semibold opacity-60">
           klik kartu untuk membalik
         </span>
@@ -80,7 +95,8 @@ export function FlashcardPlay({ questions, activity, report }: ModeProps) {
             className="h-2 rounded-full transition-all duration-200"
             style={{
               width: i === idx ? 22 : 8,
-              background: i === idx ? "var(--color-score)" : "rgba(255,255,255,.35)",
+              background:
+                i === idx ? "var(--color-score)" : "rgba(255,255,255,.35)",
             }}
           />
         ))}

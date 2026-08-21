@@ -3,6 +3,7 @@ import { sesiAdminSah } from "@/lib/admin/sesi";
 import { prisma } from "@/lib/db";
 import { ambilObjekPenuh, r2Dikonfigurasi } from "@/lib/r2";
 import { kunciGambarSah } from "@/lib/unggah/gambar";
+import { dipakaiOleh } from "@/lib/unggah/pemakai";
 
 type Ctx = { params: Promise<{ kunci: string[] }> };
 
@@ -17,18 +18,26 @@ const UMUR_CACHE_DETIK = 60;
 /** GET /api/gambar/[...kunci] — menyajikan satu gambar soal dari R2. */
 export async function GET(_request: Request, { params }: Ctx) {
   if (!r2Dikonfigurasi()) {
-    return NextResponse.json({ error: "Penyimpanan berkas belum dikonfigurasi" }, { status: 503 });
+    return NextResponse.json(
+      { error: "Penyimpanan berkas belum dikonfigurasi" },
+      { status: 503 },
+    );
   }
 
   const kunci = (await params).kunci.join("/");
   // Hanya ruang nama gambar soal yang dilayani; dokumen unggahan tidak pernah
   // bisa dibaca lewat rute ini walau kuncinya ditebak dengan benar.
   if (!kunciGambarSah(kunci)) {
-    return NextResponse.json({ error: "Gambar tidak ditemukan" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Gambar tidak ditemukan" },
+      { status: 404 },
+    );
   }
 
+  // Pemakaian sebagai gambar pilihan ikut dihitung: tanpa itu, menurunkan
+  // aktivitas tidak menghentikan penyajian gambar pilihannya.
   const pemakai = await prisma.question.findMany({
-    where: { gambar: kunci },
+    where: dipakaiOleh(kunci),
     select: { activity: { select: { takedownAt: true } } },
   });
 
@@ -37,12 +46,18 @@ export async function GET(_request: Request, { params }: Ctx) {
   const semuaDiturunkan =
     pemakai.length > 0 && pemakai.every((q) => q.activity.takedownAt !== null);
   if (semuaDiturunkan && !(await sesiAdminSah())) {
-    return NextResponse.json({ error: "Gambar tidak tersedia" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Gambar tidak tersedia" },
+      { status: 404 },
+    );
   }
 
   const objek = await ambilObjekPenuh(kunci);
   if (!objek) {
-    return NextResponse.json({ error: "Gambar tidak ditemukan" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Gambar tidak ditemukan" },
+      { status: 404 },
+    );
   }
 
   return new NextResponse(objek.isi as unknown as BodyInit, {
