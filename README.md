@@ -315,52 +315,97 @@ RETURNING` sudah atomik di bawah kunci tulisnya.
 ## Pembacaan dokumen oleh worker
 
 Dokumen yang diunggah masuk antrean `ParseJob`, lalu diambil worker terpisah di
-`worker/` yang menjalankan PaddleOCR. Hasilnya disimpan **apa adanya** ke
-`OcrHalaman` — satu baris per halaman, berisi teks urut baca beserta konfidensi
-dan kotak tiap barisnya.
+`worker/`. Jalur utamanya **bukan OCR** melainkan model multimodal: tiap halaman
+dirender menjadi gambar, dikirim ke model bersama JSON Schema, dan yang kembali
+adalah struktur soal beserta koordinat tiap bagiannya.
 
-Menyimpan yang mentah lebih dulu itu disengaja: kalau penyusunan soalnya nanti
-salah, bahan aslinya masih ada untuk diperiksa tanpa perlu mengulang OCR.
+Alasannya lembar soal bukan dokumen teks. Ada diagram, tabel, gambar stimulus,
+dan pilihan jawaban yang berupa gambar — hubungan antarbagiannya terlihat dari
+tata letak, dan itu hilang begitu halaman diratakan menjadi baris teks.
 
-Worker berbicara lewat tiga endpoint bersandi `WORKER_TOKEN`:
+PaddleOCR tetap ada di `worker/ocr_worker.py` sebagai **jalur cadangan** untuk
+dokumen pindaian yang tidak terbaca model.
+
+**Pembagian kerjanya:** model memahami dan mengembalikan koordinat, worker yang
+mengerjakan bagian mekanisnya — render, potong, unggah. Model tidak pernah
+menggambar ulang gambar soal; seluruh gambar adalah potongan dari halaman
+aslinya, dipotong pakai koordinat ternormalisasi 0..1 sehingga tetap sahih
+walau halamannya dirender ulang pada DPI berbeda.
+
+Model juga **tidak diminta menjawab soal**, dan kunci jawaban hanya diambil bila
+halamannya sendiri mencantumkannya. Teks di dalam dokumen diperlakukan sebagai
+data, bukan perintah — kalimat di dalam halaman yang tampak menyuruh model
+melakukan sesuatu tetap dibaca sebagai isi soal.
+
+Worker berbicara lewat endpoint bersandi `WORKER_TOKEN`:
 
 | Endpoint | Kegunaan |
 |---|---|
 | `POST /api/worker/klaim` | Mengambil satu job; balasannya memuat URL unduh bertanda tangan |
+| `POST /api/worker/[id]/berkas` | Meminta URL unggah untuk render halaman dan potongan soal |
+| `POST /api/worker/[id]/halaman` | Menyimpan hasil satu halaman — checkpoint, bukan sekali di akhir |
 | `POST /api/worker/[id]/progres` | Kabar kemajuan, sekaligus memperbarui klaim |
-| `POST /api/worker/[id]/hasil` | Menyimpan hasil OCR mentah, atau menutup job sebagai gagal |
+| `POST /api/worker/[id]/selesai` | Menggabungkan seluruh halaman menjadi soal dan menutup job |
+| `POST /api/worker/[id]/hasil` | Jalur cadangan: hasil OCR mentah, atau menutup job sebagai gagal |
 
 Worker **tidak diberi kredensial basis data maupun kunci R2**. Kalau mesin
 worker jebol, yang bocor hanya token worker. Ini juga yang membuat worker bisa
 berjalan di mesin lain sementara basis datanya masih SQLite — berkas SQLite
 tidak bisa dibuka lewat jaringan.
 
+**Kunci objek ditentukan server, bukan worker.** Worker menyebut halaman dan
+`tempId`, server yang menyusun kuncinya. Kunci karangan tidak bisa dipakai
+menimpa objek lain: `../../etc/passwd` menjadi `etcpasswd`.
+
 **Klaim job atomik.** Kolom `workerId`/`klaimAt` diisi lewat pembaruan
 bersyarat, sehingga dari enam worker yang meminta bersamaan hanya satu yang
 berhasil menandai job. Job yang klaimnya basi lebih dari sepuluh menit kembali
 ke antrean dengan `percobaan` bertambah, dan berhenti dicoba setelah tiga kali.
 
-Statusnya berhenti di **`terbaca`**, bukan `selesai`: dokumennya sudah dibaca,
-tetapi belum disusun menjadi soal.
+**Pengulangan tidak menggandakan.** Kunci objek deterministik dari job, halaman,
+dan `tempId`, dan hasil per halaman ditulis lewat upsert — halaman yang dikirim
+tiga kali tetap menghasilkan satu soal.
 
-Hasilnya bisa diperiksa di `/admin/unggahan` — teks per halaman, konfidensi tiap
-baris, dan posisi kotaknya. Isinya juga bisa diambil utuh lewat
-`GET /api/admin/unggahan/[id]/mentah` (`?format=teks` untuk teks polos), berguna
-saat menyiapkan langkah penyusunan soal. Halaman yang konfidensi terendahnya di bawah ambang
-80 ditandai, sama seperti penandaan soal di layar Review.
+Keluaran model tidak pernah dipercaya begitu saja: yang tidak sesuai skema
+ditolak dengan `422` beserta alasannya, bukan dipaksa masuk.
+
+Hasilnya bisa diaudit di `/admin/unggahan` — render halaman di kiri, apa yang
+dibaca model di kanan, lengkap dengan potongan gambarnya, penanda soal
+bersambung, dan alasan tinjau. Provenance-nya ikut tercatat (penyedia, model,
+versi prompt dan skema) karena tanpa itu hasil lama tidak bisa dijelaskan lagi
+setelah promptnya berubah. Isinya bisa diambil utuh lewat
+`GET /api/admin/unggahan/[id]/mentah`.
+
+### Soal yang terpotong antarhalaman
+
+Satu soal bisa mulai di halaman N dan pilihannya ada di N+1. Model menandai
+`continues_to_next`/`continues_from_previous`, lalu penggabungnya
+(`src/lib/ekstraksi/gabung.ts`) menyatukan fragmen berdasarkan bendera itu,
+nomor soal, dan kedekatan halaman.
+
+Penggabungan sengaja dikerjakan di aplikasi, bukan di worker: bagian ini paling
+mudah salah dan paling perlu diuji. Keyakinan gabungan mengambil yang terendah —
+satu bagian yang meragukan membuat seluruh soalnya meragukan — dan yang tidak
+bisa dipastikan tetap digabung agar isinya tidak hilang, tetapi ditandai perlu
+ditinjau.
 
 ## Pemrosesan AI
 
-Dokumennya kini sungguhan dibaca worker sampai menjadi teks (lihat bagian di
-atas), **tetapi teks itu belum disusun menjadi soal**: layar Proses AI masih
-memakai simulasi `src/lib/ai/mockParser.ts` — progres bertahap lalu bank soal
-contoh, lengkap dengan skor keyakinan dan tanda "perlu diperiksa" di bawah ambang 80
-(FR-AI-5).
+Layar Proses AI memantau job sungguhan lewat `src/lib/ai/pantauJob.ts`: yang
+ditampilkan adalah halaman yang benar-benar sudah dibaca worker, bukan angka
+yang berjalan sendiri. Draft lama tanpa token — atau pemasangan tanpa R2 —
+jatuh ke simulasi `src/lib/ai/mockParser.ts` supaya alurnya tidak buntu.
 
-Kontraknya dipisah di `src/lib/ai/parser.ts` (`QuestionParser`, `validateQuestions`,
-`STAGES`). Worker sungguhan tinggal membaca berkas job dari R2, menjalankan OCR dan
-perapian teks, lalu menulis hasilnya ke `ParseJob.hasil`. Tidak ada hasil AI yang
-bisa melewati layar Review (FR-AI-8).
+Penandaan "perlu diperiksa" datang dari dua arah: keyakinan model, dan
+pemeriksaan deterministik di `src/lib/ekstraksi/tinjau.ts` — pilihan kurang dari
+dua, label pilihan kembar, nomor soal kembar, kotak di luar halaman, soal tanpa
+teks maupun gambar. Yang kedua penting justru karena yang pertama bisa keliru
+dengan meyakinkan.
+
+Enam tipe soal model dipetakan ke tiga tipe aplikasi
+(`src/lib/ekstraksi/keSoal.ts`). Yang tidak punya padanan tidak dibuang,
+melainkan dipetakan ke yang terdekat lalu ditandai beserta alasannya — gurunya
+yang memutuskan. Tidak ada hasil AI yang bisa melewati layar Review (FR-AI-8).
 
 ## Struktur
 
@@ -370,9 +415,10 @@ src/app/            rute (App Router) — satu berkas per halaman desain
 src/app/api/        route handler: aktivitas, main, sesi peserta
 src/components/     komponen bersama; components/play/ berisi 5 mode main
 src/lib/            tipe, akses basis data, validasi, turunan bank soal, parser AI
+src/lib/ekstraksi/  kontrak hasil model, penggabung antarhalaman, aturan tinjau
 src/lib/email/      penyusunan & pengiriman surel tautan
 src/lib/unggah/     aturan berkas, hitung halaman, dan alur unggah di peramban
-worker/             worker Python pembaca dokumen (PaddleOCR)
+worker/             worker Python: vlm_worker.py (utama), ocr_worker.py (cadangan)
 src/lib/auth/       sesi pengguna dan token tautan masuk
 src/lib/admin/      sesi admin, pembatas laju, kueri audit
 src/lib/__tests__/  tes logika permainan & validasi API
@@ -387,13 +433,17 @@ peramban ini (`src/lib/store.ts`).
 
 ## Yang belum ada
 
-- **Penyusunan soal dari teks OCR.** Dokumen sudah dibaca menjadi teks mentah dan
-  bisa diperiksa di `/admin/unggahan`, tetapi mengubahnya menjadi soal terstruktur
-  belum ada; soal yang muncul di layar Review masih dari simulasi.
 - **Berkas `.docx`.** Worker menandai job yang memuatnya sebagai gagal.
-- **Pemotongan gambar otomatis.** Guru menambahkan gambar soal sendiri di layar
-  Review; memotong gambar dari halaman dokumen sumber dan menentukan gambar itu
-  milik soal nomor berapa adalah pekerjaan worker, dan belum ada.
+- **Pilihan jawaban berupa gambar.** Sudah dipotong dan disimpan, tetapi editor
+  hanya menyimpan pilihan sebagai teks — soalnya ditandai perlu ditinjau agar
+  gurunya mengganti pilihan itu dengan teks.
+- **Potongan sumber di layar Review.** Potongan satu soal utuh sudah disimpan,
+  tetapi belum ditampilkan berdampingan dengan hasil ekstraksinya untuk guru;
+  saat ini baru bisa dilihat admin.
+- **Memotong ulang dari layar Review.** Kotak hasil model belum bisa digeser
+  guru kalau potongannya meleset.
+- **Metadata penggunaan token.** Belum dicatat, jadi biaya per dokumen belum
+  bisa dihitung.
 - **Peninjauan sebelum tayang.** Soal publik langsung tampil di katalog; moderasi
   berjalan setelahnya, lewat laporan dan halaman admin.
 - **Pembatasan laju yang menyeluruh.** Masuk admin dan pengiriman laporan sudah

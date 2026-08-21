@@ -51,8 +51,8 @@ export default async function AdminUnggahanPage({ searchParams }: { searchParams
       ) : (
         <ul className="m-0 flex list-none flex-col gap-3 p-0">
           {baris.map((job) => {
-            const halamanTerbaca = job.uploads.reduce((n, u) => n + u._count.halamanOcr, 0);
-            const cuplikan = job.uploads.find((u) => u.halamanOcr[0]?.teks)?.halamanOcr[0]?.teks;
+            const halamanTerbaca = job.uploads.reduce((n, u) => n + u._count.halamanDokumen, 0);
+            const cuplikan = job.uploads.find((u) => u.halamanDokumen[0]?.teks)?.halamanDokumen[0]?.teks;
             return (
               <li
                 key={job.id}

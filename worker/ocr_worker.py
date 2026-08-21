@@ -23,6 +23,8 @@ from typing import Any
 
 import requests
 
+from galat import GalatBerkode
+
 APP_URL = os.environ.get("APP_URL", "http://localhost:3000").rstrip("/")
 WORKER_TOKEN = os.environ.get("WORKER_TOKEN", "")
 WORKER_ID = os.environ.get("WORKER_ID", f"worker-{os.getpid()}")
@@ -54,13 +56,19 @@ def halaman_dari_berkas(isi: bytes, kind: str) -> list[bytes]:
     if kind == "pdf":
         import pymupdf
 
-        dokumen = pymupdf.open(stream=isi, filetype="pdf")
+        try:
+            dokumen = pymupdf.open(stream=isi, filetype="pdf")
+        except Exception as e:  # noqa: BLE001 - pymupdf melempar beragam tipe
+            raise GalatBerkode(f"PDF tidak bisa dibuka: {e}", "BERKAS_RUSAK") from e
+        if dokumen.needs_pass:
+            dokumen.close()
+            raise GalatBerkode("PDF ini dikunci kata sandi", "PDF_TERKUNCI")
         try:
             return [h.get_pixmap(dpi=DPI).tobytes("png") for h in dokumen]
         finally:
             dokumen.close()
 
-    raise ValueError(f"jenis berkas {kind!r} belum didukung worker")
+    raise GalatBerkode(f"jenis berkas {kind!r} belum didukung worker", "BERKAS_TIDAK_DIDUKUNG")
 
 
 def baca_halaman(ocr, gambar: bytes) -> dict[str, Any]:
@@ -152,11 +160,11 @@ def kerjakan(ocr, job: dict[str, Any]) -> None:
     print(f"[{job_id}] selesai — {len(hasil_halaman)} halaman terkirim")
 
 
-def laporkan_gagal(job_id: str, alasan: str) -> None:
+def laporkan_gagal(job_id: str, alasan: str, kode: str) -> None:
     try:
         requests.post(
             f"{APP_URL}/api/worker/{job_id}/hasil",
-            json={"galat": alasan},
+            json={"galat": alasan, "kodeGalat": kode},
             headers=HEADERS,
             timeout=30,
         )
@@ -195,8 +203,9 @@ def main() -> int:
         try:
             kerjakan(ocr, job)
         except Exception as e:  # noqa: BLE001 - job gagal tidak boleh mematikan worker
-            print(f"[{job['id']}] gagal: {e}", file=sys.stderr)
-            laporkan_gagal(job["id"], str(e)[:500])
+            kode = e.kode if isinstance(e, GalatBerkode) else "TIDAK_DIKETAHUI"
+            print(f"[{job['id']}] gagal ({kode}): {e}", file=sys.stderr)
+            laporkan_gagal(job["id"], str(e)[:500], kode)
 
 
 if __name__ == "__main__":

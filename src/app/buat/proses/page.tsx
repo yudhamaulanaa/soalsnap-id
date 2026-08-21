@@ -6,6 +6,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { ScanPaper } from "@/components/ScanPaper";
 import { STAGES } from "@/lib/ai/parser";
 import { mockParser } from "@/lib/ai/mockParser";
+import { JobGagal, pantauJob } from "@/lib/ai/pantauJob";
 import { useStore } from "@/lib/store";
 
 /** Page 03 — Proses AI. */
@@ -15,9 +16,11 @@ export default function ProsesPage() {
   const simpanHasilAI = useStore((s) => s.simpanHasilAI);
 
   const [pct, setPct] = useState(0);
+  const [tahapServer, setTahapServer] = useState<string | null>(null);
   const [gagal, setGagal] = useState<string | null>(null);
 
   const jumlahFile = draft?.files.length ?? 0;
+  const token = draft?.token;
 
   useEffect(() => {
     if (jumlahFile === 0) {
@@ -28,11 +31,24 @@ export default function ProsesPage() {
     // Pemrosesan dibatalkan saat layar ditinggalkan. Di React Strict Mode
     // jalannya yang pertama ikut dibatalkan, lalu efek dijalankan ulang.
     const controller = new AbortController();
-    mockParser
-      .parse(
-        { files: useStore.getState().draft?.files ?? [] },
-        { onProgress: setPct, signal: controller.signal },
-      )
+
+    // Dokumen yang benar-benar terunggah dipantau ke server. Tanpa token —
+    // penyimpanan belum dikonfigurasi, atau draft lama dari peramban ini —
+    // jalur simulasi dipakai supaya alurnya tidak buntu.
+    const jalan = token
+      ? pantauJob(token, {
+          signal: controller.signal,
+          onKemajuan: ({ progres, tahap }) => {
+            setPct(progres);
+            setTahapServer(tahap);
+          },
+        })
+      : mockParser.parse(
+          { files: useStore.getState().draft?.files ?? [] },
+          { onProgress: setPct, signal: controller.signal },
+        );
+
+    jalan
       .then(({ questions, sourcePages }) => {
         simpanHasilAI(questions, sourcePages);
         // Hasil AI tidak pernah dipublikasikan langsung — selalu ke Review
@@ -42,11 +58,15 @@ export default function ProsesPage() {
       .catch((err: unknown) => {
         if (err instanceof DOMException && err.name === "AbortError") return;
         // File dipertahankan agar bisa dicoba ulang (FR-AI-7).
-        setGagal(err instanceof Error ? err.message : "Pemrosesan gagal.");
+        const pesan =
+          err instanceof JobGagal || err instanceof Error
+            ? err.message
+            : "Pemrosesan gagal.";
+        setGagal(pesan);
       });
 
     return () => controller.abort();
-  }, [jumlahFile, router, simpanHasilAI]);
+  }, [jumlahFile, router, simpanHasilAI, token]);
 
   const bulat = Math.min(100, Math.round(pct));
 
@@ -103,36 +123,53 @@ export default function ProsesPage() {
                 />
               </div>
 
-              <ol className="m-0 mt-5 flex list-none flex-col items-start gap-2.5 p-0">
-                {STAGES.map((s, i) => {
-                  const next = STAGES[i + 1]?.at ?? 100;
-                  const done = bulat >= next;
-                  const active = !done && bulat >= s.at;
-                  return (
-                    <li key={s.label} className="flex items-center gap-2.5">
-                      <span
-                        className={`w-5 text-center font-extrabold ${
-                          done ? "text-teal" : active ? "text-ai" : "text-fill-5"
-                        }`}
-                        aria-hidden="true"
-                      >
-                        {done ? "✓" : active ? "●" : "○"}
-                      </span>
-                      <span
-                        className={`text-sm ${
-                          done
-                            ? "font-medium text-ink-2"
-                            : active
-                              ? "font-bold text-ink"
-                              : "font-medium text-dim-2"
-                        }`}
-                      >
-                        {s.label}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ol>
+              {tahapServer ? (
+                // Job sungguhan melaporkan tahapnya sendiri — daftar tahap
+                // simulasi di bawah tidak dipakai karena urutannya berbeda
+                // (worker tidak pernah menebak kunci jawaban).
+                <p
+                  className="m-0 mt-5 text-sm font-medium text-ink-2"
+                  role="status"
+                  aria-live="polite"
+                >
+                  {tahapServer}…
+                </p>
+              ) : (
+                <ol className="m-0 mt-5 flex list-none flex-col items-start gap-2.5 p-0">
+                  {STAGES.map((s, i) => {
+                    const next = STAGES[i + 1]?.at ?? 100;
+                    const done = bulat >= next;
+                    const active = !done && bulat >= s.at;
+                    return (
+                      <li key={s.label} className="flex items-center gap-2.5">
+                        <span
+                          className={`w-5 text-center font-extrabold ${
+                            done
+                              ? "text-teal"
+                              : active
+                                ? "text-ai"
+                                : "text-fill-5"
+                          }`}
+                          aria-hidden="true"
+                        >
+                          {done ? "✓" : active ? "●" : "○"}
+                        </span>
+                        <span
+                          className={`text-sm ${
+                            done
+                              ? "font-medium text-ink-2"
+                              : active
+                                ? "font-bold text-ink"
+                                : "font-medium text-dim-2"
+                          }`}
+                        >
+                          {s.label}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
             </>
           )}
         </div>

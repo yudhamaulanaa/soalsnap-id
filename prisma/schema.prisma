@@ -159,6 +159,23 @@ model ParseJob {
   /// Soal hasil worker sebagai JSON; kosong sampai job selesai.
   hasil String?
 
+  /// Kode galat stabil (SOURCE_NOT_FOUND, PDF_ENCRYPTED, …) untuk ditindaklanjuti
+  /// program; `galat` di atas adalah kalimat untuk manusia.
+  kodeGalat String?
+
+  // Provenance: tanpa ini hasil ekstraksi tidak bisa direproduksi saat model
+  // atau prompt-nya berganti.
+  provider         String?
+  model            String?
+  promptVersion    String?
+  schemaVersion    String?
+  extractorVersion String?
+
+  halamanTotal   Int @default(0)
+  halamanSelesai Int @default(0)
+  soalTerdeteksi Int @default(0)
+  perluTinjau    Int @default(0)
+
   workerId  String?
   klaimAt   DateTime?
   percobaan Int       @default(0)
@@ -195,35 +212,48 @@ model Upload {
   urutan    Int
   createdAt DateTime @default(now())
 
-  halamanOcr OcrHalaman[]
+  halamanDokumen HalamanDokumen[]
 
   @@index([jobId, urutan])
 }
 
-/// Hasil OCR mentah satu halaman berkas, apa adanya dari mesin OCR.
+/// Satu halaman dokumen: hasil render, hasil ekstraksi model, dan hasil OCR.
 ///
-/// Disimpan sebelum ditafsirkan menjadi soal: kalau penyusunan soalnya nanti
-/// salah, bahan aslinya masih ada untuk diperiksa tanpa perlu mengulang OCR.
-model OcrHalaman {
+/// Semuanya disimpan mentah sebelum ditafsirkan menjadi soal — kalau
+/// penyusunannya salah, bahan aslinya masih ada untuk diperiksa tanpa perlu
+/// mengulang pemrosesan. Barisnya juga menjadi checkpoint per halaman: saat job
+/// diulang, halaman yang sudah selesai tidak dikerjakan lagi (FR-019).
+model HalamanDokumen {
   id       String @id @default(cuid())
   uploadId String
   upload   Upload @relation(fields: [uploadId], references: [id], onDelete: Cascade)
 
   /// Nomor halaman di dalam berkas itu, mulai dari 1.
   halaman Int
-  /// Teks polos urut baca — bentuk yang akan dibaca model perapi nanti.
-  teks    String
 
-  /// Baris hasil OCR sebagai JSON: [{ teks, konfidensi, kotak: [x1,y1,x2,y2] }].
-  /// SQLite tidak punya tipe JSON, jadi disimpan sebagai teks.
-  baris String
+  /// "tertunda" | "selesai" | "gagal" — checkpoint per halaman.
+  status String @default("tertunda")
 
-  /// Konfidensi 0–100. Yang terendah dipakai menandai halaman perlu diperiksa;
-  /// rata-ratanya hanya untuk gambaran umum.
-  konfidensiMin  Int
-  konfidensiRata Int
+  /// Kunci objek render halaman di R2, beserta ukuran pikselnya. Ukuran ini
+  /// yang dipakai mengubah bbox ternormalisasi menjadi piksel saat memotong.
+  kunciRender String?
+  lebar       Int?
+  tinggi      Int?
 
-  /// Lama OCR halaman ini, untuk melihat beban worker.
+  /// Hasil ekstraksi model apa adanya (JSON PageExtraction), untuk audit dan
+  /// untuk mengulang penggabungan tanpa memanggil model lagi.
+  rawEkstraksi String?
+
+  // — Hasil OCR; kini jalur cadangan, jadi boleh kosong —
+  /// Teks polos urut baca.
+  teks  String?
+  /// Baris OCR sebagai JSON: [{ teks, konfidensi, kotak: [x1,y1,x2,y2] }].
+  baris String?
+  /// Konfidensi 0–100; yang terendah menandai halaman perlu diperiksa.
+  konfidensiMin  Int?
+  konfidensiRata Int?
+
+  /// Lama pemrosesan halaman ini, untuk melihat beban worker.
   msProses Int?
 
   createdAt DateTime @default(now())

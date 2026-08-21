@@ -44,7 +44,12 @@ export async function POST(request: Request, { params }: Ctx) {
   if (hasil.data.galat) {
     await prisma.parseJob.update({
       where: { id },
-      data: { status: "gagal", galat: hasil.data.galat, selesaiAt: new Date() },
+      data: {
+        status: "gagal",
+        galat: hasil.data.galat,
+        kodeGalat: hasil.data.kodeGalat ?? "TIDAK_DIKETAHUI",
+        selesaiAt: new Date(),
+      },
     });
     return NextResponse.json({ status: "gagal" });
   }
@@ -62,8 +67,8 @@ export async function POST(request: Request, { params }: Ctx) {
 
   await prisma.$transaction([
     // Ditulis ulang seluruhnya supaya percobaan kedua tidak menumpuk baris.
-    prisma.ocrHalaman.deleteMany({ where: { uploadId: { in: job.uploads.map((u) => u.id) } } }),
-    prisma.ocrHalaman.createMany({
+    prisma.halamanDokumen.deleteMany({ where: { uploadId: { in: job.uploads.map((u) => u.id) } } }),
+    prisma.halamanDokumen.createMany({
       data: halaman.map((h) => ({
         uploadId: idPerKunci.get(h.uploadKey)!,
         halaman: h.halaman,

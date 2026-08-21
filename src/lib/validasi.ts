@@ -49,17 +49,17 @@ export const kontakSchema = z.object({
   phone: z.string().trim().max(30).optional(),
 });
 
-export const buatAktivitasSchema = pengaturanSchema.partial({ title: true }).extend({
-  questions: z.array(soalSchema).min(1, "Minimal satu soal").max(200),
-  creator: kontakSchema.optional(),
-});
-
-export const ubahAktivitasSchema = pengaturanSchema
-  .partial()
+export const buatAktivitasSchema = pengaturanSchema
+  .partial({ title: true })
   .extend({
-    questions: z.array(soalSchema).min(1).max(200).optional(),
+    questions: z.array(soalSchema).min(1, "Minimal satu soal").max(200),
     creator: kontakSchema.optional(),
   });
+
+export const ubahAktivitasSchema = pengaturanSchema.partial().extend({
+  questions: z.array(soalSchema).min(1).max(200).optional(),
+  creator: kontakSchema.optional(),
+});
 
 export const sesiSchema = z.object({
   playerName: z.string().trim().max(60).optional(),
@@ -132,6 +132,22 @@ const ocrBarisSchema = z.object({
 });
 
 /** Hasil OCR mentah satu halaman, dilaporkan worker. */
+/**
+ * Kode galat stabil (PRD §15). Pesan untuk manusia boleh berubah kapan saja;
+ * kode inilah yang boleh dijadikan pegangan program dan statistik.
+ */
+export const KODE_GALAT = [
+  "BERKAS_TIDAK_DIDUKUNG",
+  "BERKAS_RUSAK",
+  "PDF_TERKUNCI",
+  "MODEL_DITOLAK",
+  "MODEL_TIDAK_MERESPONS",
+  "MODEL_BELUM_DIATUR",
+  "HASIL_TIDAK_SESUAI_SKEMA",
+  "UNGGAH_GAGAL",
+  "TIDAK_DIKETAHUI",
+] as const;
+
 export const hasilWorkerSchema = z.object({
   halaman: z
     .array(
@@ -149,6 +165,44 @@ export const hasilWorkerSchema = z.object({
     .optional(),
   /** Diisi kalau worker gagal; job ditandai gagal beserta alasannya. */
   galat: z.string().trim().max(500).optional(),
+  kodeGalat: z.enum(KODE_GALAT).optional(),
+});
+
+/** Worker meminta izin unggah render halaman atau potongan soal. */
+export const berkasWorkerSchema = z.object({
+  berkas: z
+    .array(
+      z.object({
+        jenis: z.enum(["halaman", "potongan"]),
+        /// Kunci berkas dari balasan klaim; satu job boleh memuat beberapa berkas.
+        uploadKey: z.string().trim().min(1).max(300),
+        halaman: z.number().int().min(1).max(500),
+        tempId: z.string().trim().max(80).optional(),
+        contentType: z.string().trim().min(1).max(120),
+      }),
+    )
+    .min(1)
+    .max(200),
+});
+
+/** Checkpoint satu halaman: hasil ekstraksi model apa adanya. */
+export const halamanWorkerSchema = z.object({
+  uploadKey: z.string().trim().min(1).max(300),
+  halaman: z.number().int().min(1).max(500),
+  kunciRender: z.string().max(300).optional(),
+  lebar: z.number().int().min(1).max(20000).optional(),
+  tinggi: z.number().int().min(1).max(20000).optional(),
+  /// Divalidasi terpisah oleh uraiEkstraksi; di sini cukup dipastikan objek.
+  ekstraksi: z.unknown(),
+  msProses: z.number().int().min(0).max(3_600_000).optional(),
+});
+
+export const selesaiWorkerSchema = z.object({
+  provider: z.string().trim().max(60).optional(),
+  model: z.string().trim().max(120).optional(),
+  promptVersion: z.string().trim().max(40).optional(),
+  schemaVersion: z.string().trim().max(40).optional(),
+  extractorVersion: z.string().trim().max(40).optional(),
 });
 
 export const masukAdminSchema = z.object({
@@ -186,5 +240,7 @@ export const adminQuerySchema = z.object({
 /** Pesan ringkas untuk ditampilkan ke pengguna. */
 export function pesanValidasi(error: z.ZodError): string {
   const first = error.issues[0];
-  return first ? `${first.path.join(".") || "data"}: ${first.message}` : "Data tidak valid";
+  return first
+    ? `${first.path.join(".") || "data"}: ${first.message}`
+    : "Data tidak valid";
 }
