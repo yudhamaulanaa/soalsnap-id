@@ -58,7 +58,15 @@ export async function PATCH(request: Request, { params }: Ctx) {
 
   const ada = await prisma.activity.findUnique({
     where: { editSlug },
-    select: { id: true },
+    // Kunci gambar lama diambil sebelum soalnya ditulis ulang: sesudah itu
+    // barisnya sudah hilang dan tidak ada lagi yang tahu gambar mana yang
+    // ditinggalkan.
+    select: {
+      id: true,
+      questions: data.questions
+        ? { select: { gambar: true, opts: true } }
+        : undefined,
+    },
   });
   if (!ada) {
     return NextResponse.json(
@@ -66,6 +74,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
       { status: 404 },
     );
   }
+  const gambarSebelum = (ada.questions ?? []).flatMap(kunciGambarBaris);
 
   // Soal ditulis ulang seluruhnya agar urutan dan penghapusan ikut tersimpan.
   const activity = await prisma.$transaction(async (tx) => {
@@ -96,6 +105,13 @@ export async function PATCH(request: Request, { params }: Ctx) {
       include: { questions: { orderBy: { urutan: "asc" } } },
     });
   });
+
+  // Gambar yang tidak lagi dipakai setelah penyuntingan ikut dibuang. Disapu
+  // sesudah transaksi supaya yang diperiksa adalah keadaan yang benar-benar
+  // tersimpan; `sapuGambar` sendiri memeriksa ulang tiap kunci, jadi gambar
+  // yang masih dipakai — di soal ini maupun di aktivitas lain — tidak ikut
+  // terhapus.
+  if (gambarSebelum.length > 0) await sapuGambar(gambarSebelum);
 
   // Tautan hanya dikirim pada penyimpanan yang memang membawa alamat email;
   // penyuntingan biasa tidak menyentuh penyedia surel.
