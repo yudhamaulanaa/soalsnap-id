@@ -312,11 +312,46 @@ secara atomik — beberapa worker boleh berjalan paralel tanpa mengerjakan job y
 sama. Di Postgres nanti pakai `FOR UPDATE SKIP LOCKED`; di SQLite satu `UPDATE …
 RETURNING` sudah atomik di bawah kunci tulisnya.
 
+## Pembacaan dokumen oleh worker
+
+Dokumen yang diunggah masuk antrean `ParseJob`, lalu diambil worker terpisah di
+`worker/` yang menjalankan PaddleOCR. Hasilnya disimpan **apa adanya** ke
+`OcrHalaman` — satu baris per halaman, berisi teks urut baca beserta konfidensi
+dan kotak tiap barisnya.
+
+Menyimpan yang mentah lebih dulu itu disengaja: kalau penyusunan soalnya nanti
+salah, bahan aslinya masih ada untuk diperiksa tanpa perlu mengulang OCR.
+
+Worker berbicara lewat tiga endpoint bersandi `WORKER_TOKEN`:
+
+| Endpoint | Kegunaan |
+|---|---|
+| `POST /api/worker/klaim` | Mengambil satu job; balasannya memuat URL unduh bertanda tangan |
+| `POST /api/worker/[id]/progres` | Kabar kemajuan, sekaligus memperbarui klaim |
+| `POST /api/worker/[id]/hasil` | Menyimpan hasil OCR mentah, atau menutup job sebagai gagal |
+
+Worker **tidak diberi kredensial basis data maupun kunci R2**. Kalau mesin
+worker jebol, yang bocor hanya token worker. Ini juga yang membuat worker bisa
+berjalan di mesin lain sementara basis datanya masih SQLite — berkas SQLite
+tidak bisa dibuka lewat jaringan.
+
+**Klaim job atomik.** Kolom `workerId`/`klaimAt` diisi lewat pembaruan
+bersyarat, sehingga dari enam worker yang meminta bersamaan hanya satu yang
+berhasil menandai job. Job yang klaimnya basi lebih dari sepuluh menit kembali
+ke antrean dengan `percobaan` bertambah, dan berhenti dicoba setelah tiga kali.
+
+Statusnya berhenti di **`terbaca`**, bukan `selesai`: dokumennya sudah dibaca,
+tetapi belum disusun menjadi soal.
+
+Hasilnya bisa diperiksa di `/admin/unggahan` — teks per halaman, konfidensi tiap
+baris, dan posisi kotaknya. Halaman yang konfidensi terendahnya di bawah ambang
+80 ditandai, sama seperti penandaan soal di layar Review.
+
 ## Pemrosesan AI
 
-Berkasnya kini sungguhan tersimpan dan job-nya masuk antrean, **tetapi belum ada
-worker yang mengambilnya**: job berhenti di status `antre`, dan layar Proses AI
-masih memakai simulasi `src/lib/ai/mockParser.ts` — progres bertahap lalu bank soal
+Dokumennya kini sungguhan dibaca worker sampai menjadi teks (lihat bagian di
+atas), **tetapi teks itu belum disusun menjadi soal**: layar Proses AI masih
+memakai simulasi `src/lib/ai/mockParser.ts` — progres bertahap lalu bank soal
 contoh, lengkap dengan skor keyakinan dan tanda "perlu diperiksa" di bawah ambang 80
 (FR-AI-5).
 
@@ -335,6 +370,7 @@ src/components/     komponen bersama; components/play/ berisi 5 mode main
 src/lib/            tipe, akses basis data, validasi, turunan bank soal, parser AI
 src/lib/email/      penyusunan & pengiriman surel tautan
 src/lib/unggah/     aturan berkas, hitung halaman, dan alur unggah di peramban
+worker/             worker Python pembaca dokumen (PaddleOCR)
 src/lib/auth/       sesi pengguna dan token tautan masuk
 src/lib/admin/      sesi admin, pembatas laju, kueri audit
 src/lib/__tests__/  tes logika permainan & validasi API
@@ -349,8 +385,10 @@ peramban ini (`src/lib/store.ts`).
 
 ## Yang belum ada
 
-- **Worker pemroses.** Berkas sudah tersimpan di R2 dan job sudah mengantre, tetapi
-  belum ada worker yang mengambil antrean; hasil soalnya masih dari simulasi.
+- **Penyusunan soal dari teks OCR.** Dokumen sudah dibaca menjadi teks mentah dan
+  bisa diperiksa di `/admin/unggahan`, tetapi mengubahnya menjadi soal terstruktur
+  belum ada; soal yang muncul di layar Review masih dari simulasi.
+- **Berkas `.docx`.** Worker menandai job yang memuatnya sebagai gagal.
 - **Pemotongan gambar otomatis.** Guru menambahkan gambar soal sendiri di layar
   Review; memotong gambar dari halaman dokumen sumber dan menentukan gambar itu
   milik soal nomor berapa adalah pekerjaan worker, dan belum ada.

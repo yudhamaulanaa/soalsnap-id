@@ -195,7 +195,41 @@ model Upload {
   urutan    Int
   createdAt DateTime @default(now())
 
+  halamanOcr OcrHalaman[]
+
   @@index([jobId, urutan])
+}
+
+/// Hasil OCR mentah satu halaman berkas, apa adanya dari mesin OCR.
+///
+/// Disimpan sebelum ditafsirkan menjadi soal: kalau penyusunan soalnya nanti
+/// salah, bahan aslinya masih ada untuk diperiksa tanpa perlu mengulang OCR.
+model OcrHalaman {
+  id       String @id @default(cuid())
+  uploadId String
+  upload   Upload @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+
+  /// Nomor halaman di dalam berkas itu, mulai dari 1.
+  halaman Int
+  /// Teks polos urut baca — bentuk yang akan dibaca model perapi nanti.
+  teks    String
+
+  /// Baris hasil OCR sebagai JSON: [{ teks, konfidensi, kotak: [x1,y1,x2,y2] }].
+  /// SQLite tidak punya tipe JSON, jadi disimpan sebagai teks.
+  baris String
+
+  /// Konfidensi 0–100. Yang terendah dipakai menandai halaman perlu diperiksa;
+  /// rata-ratanya hanya untuk gambaran umum.
+  konfidensiMin  Int
+  konfidensiRata Int
+
+  /// Lama OCR halaman ini, untuk melihat beban worker.
+  msProses Int?
+
+  createdAt DateTime @default(now())
+
+  @@unique([uploadId, halaman])
+  @@index([uploadId, halaman])
 }
 
 /// Akun opsional.

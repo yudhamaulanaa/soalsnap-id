@@ -28,6 +28,8 @@ export default async function AdminPage() {
         <Angka label="Publik di katalog" nilai={angka.publik} />
         <Angka label="Pernah diturunkan" nilai={angka.diturunkan} />
         <Angka label="Laporan menunggu" nilai={angka.laporanBaru} sorot={angka.laporanBaru > 0} />
+        <Angka label="Unggahan diproses" nilai={angka.jobAntre} sorot={angka.jobAntre > 0} />
+        <Angka label="Dokumen terbaca" nilai={angka.jobTerbaca} />
         <Angka label="Total soal" nilai={angka.soal} />
         <Angka label="Sesi peserta" nilai={angka.sesi} />
       </div>

@@ -24,6 +24,11 @@ yarn-error.log*
 
 /src/generated/prisma
 
+# artefak Python worker
+__pycache__/
+*.py[cod]
+/worker/.venv/
+
 # database lokal (SQLite)
 /dev.db
 /dev.db-journal
