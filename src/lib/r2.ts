@@ -22,6 +22,7 @@ interface Konfigurasi {
   bucket: string;
   accessKeyId: string;
   secretAccessKey: string;
+  region: string;
 }
 
 function konfigurasi(): Konfigurasi | null {
@@ -29,6 +30,7 @@ function konfigurasi(): Konfigurasi | null {
   const accessKeyId = process.env.R2_ACCESS_KEY_ID?.trim();
   const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY?.trim();
   const akun = process.env.R2_ACCOUNT_ID?.trim();
+  const region = process.env.R2_REGION?.trim() || "auto";
 
   // R2_ENDPOINT boleh diisi untuk jurisdiksi khusus atau server tiruan saat uji.
   const endpoint =
@@ -36,7 +38,7 @@ function konfigurasi(): Konfigurasi | null {
     (akun ? `https://${akun}.r2.cloudflarestorage.com` : "");
 
   if (!bucket || !accessKeyId || !secretAccessKey || !endpoint) return null;
-  return { endpoint, bucket, accessKeyId, secretAccessKey };
+  return { endpoint, bucket, accessKeyId, secretAccessKey, region };
 }
 
 export function r2Dikonfigurasi(): boolean {
@@ -49,13 +51,13 @@ function klienR2(): { klien: S3Client; bucket: string } {
   const konfig = konfigurasi();
   if (!konfig) throw new Error("Penyimpanan R2 belum dikonfigurasi");
 
-  const tanda = `${konfig.endpoint}|${konfig.bucket}|${konfig.accessKeyId}`;
+  const tanda = `${konfig.endpoint}|${konfig.bucket}|${konfig.accessKeyId}|${konfig.region}`;
   if (tersimpan?.tanda !== tanda) {
     tersimpan = {
       tanda,
       bucket: konfig.bucket,
       klien: new S3Client({
-        region: "auto",
+        region: konfig.region,
         endpoint: konfig.endpoint,
         // R2 memakai gaya path, bukan subdomain per bucket.
         forcePathStyle: true,

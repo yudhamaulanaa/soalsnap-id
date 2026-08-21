@@ -32,6 +32,10 @@ WORKER_ID = os.environ.get("WORKER_ID", f"worker-{os.getpid()}")
 # tulisannya kecil, dengan konsekuensi OCR menjadi lebih lambat.
 DPI = int(os.environ.get("OCR_DPI", "200"))
 JEDA_KOSONG_DETIK = float(os.environ.get("JEDA_KOSONG_DETIK", "5"))
+OCR_LANG = os.environ.get("OCR_LANG", "id")
+OCR_VERSION = os.environ.get("OCR_VERSION") or None
+TEXT_DETECTION_MODEL = os.environ.get("OCR_DET_MODEL") or None
+TEXT_RECOGNITION_MODEL = os.environ.get("OCR_REC_MODEL") or None
 
 HEADERS = {"Authorization": f"Bearer {WORKER_TOKEN}"}
 
@@ -41,7 +45,10 @@ def buat_ocr():
     from paddleocr import PaddleOCR
 
     return PaddleOCR(
-        lang="id",
+        lang=OCR_LANG,
+        ocr_version=OCR_VERSION,
+        text_detection_model_name=TEXT_DETECTION_MODEL,
+        text_recognition_model_name=TEXT_RECOGNITION_MODEL,
         use_doc_orientation_classify=False,
         use_doc_unwarping=False,
         use_textline_orientation=False,

@@ -70,7 +70,7 @@ ASET = {
         "bbox": BBOX,
         "alt_text": {"type": ["string", "null"]},
     },
-    "required": ["temp_id", "role", "bbox"],
+    "required": ["temp_id", "role", "bbox", "alt_text"],
     "additionalProperties": False,
 }
 
@@ -93,7 +93,7 @@ PAGE_SCHEMA = {
                     "stem": {
                         "type": "object",
                         "properties": {"text": {"type": ["string", "null"]}, "bbox": {**BBOX, "type": ["object", "null"]}},
-                        "required": ["text"],
+                        "required": ["text", "bbox"],
                         "additionalProperties": False,
                     },
                     "assets": {"type": "array", "items": ASET},
@@ -108,7 +108,7 @@ PAGE_SCHEMA = {
                                 "bbox": {**BBOX, "type": ["object", "null"]},
                                 "assets": {"type": "array", "items": ASET},
                             },
-                            "required": ["key", "content_type"],
+                            "required": ["key", "text", "content_type", "bbox", "assets"],
                             "additionalProperties": False,
                         },
                     },
@@ -120,14 +120,16 @@ PAGE_SCHEMA = {
                     "review_reasons": {"type": "array", "items": {"type": "string"}},
                 },
                 "required": [
-                    "temp_id", "question_type", "question_bbox", "stem",
+                    "temp_id", "number", "question_type", "question_bbox", "stem",
+                    "assets", "options", "correct_answer",
                     "continues_from_previous", "continues_to_next", "confidence", "needs_review",
+                    "review_reasons",
                 ],
                 "additionalProperties": False,
             },
         },
         "warnings": {"type": "array", "items": {"type": "string"}},
     },
-    "required": ["page", "questions"],
+    "required": ["page", "questions", "warnings"],
     "additionalProperties": False,
 }
