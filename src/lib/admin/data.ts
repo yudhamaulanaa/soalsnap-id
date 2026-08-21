@@ -91,6 +91,12 @@ export async function daftarJob(status: string | undefined, halaman: number) {
             kind: true,
             halaman: true,
             _count: { select: { halamanOcr: true } },
+            // Halaman pertama saja: cukup untuk memperlihatkan ada isinya.
+            halamanOcr: {
+              take: 1,
+              orderBy: { halaman: "asc" as const },
+              select: { teks: true },
+            },
           },
         },
       },

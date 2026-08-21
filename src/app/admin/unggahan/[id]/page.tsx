@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StatusJob } from "@/components/admin/StatusJob";
+import { TombolSalinTeks } from "@/components/admin/TombolSalinTeks";
 import { jobLengkap } from "@/lib/admin/data";
 import { pastikanAdmin } from "@/lib/admin/sesi";
 import { formatUkuran, formatWaktu } from "@/lib/format";
@@ -35,6 +36,11 @@ export default async function AdminUnggahanDetailPage({ params }: Ctx) {
   if (!job) notFound();
 
   const totalHalaman = job.uploads.reduce((n, u) => n + u.halamanOcr.length, 0);
+  const seluruhTeks = job.uploads
+    .flatMap((u) =>
+      u.halamanOcr.map((h) => `--- ${u.namaAsli} · halaman ${h.halaman} ---\n${h.teks}`),
+    )
+    .join("\n\n");
 
   return (
     <main className="mx-auto flex w-full max-w-[1160px] flex-col gap-6 px-6 pb-20 pt-9">
@@ -57,6 +63,29 @@ export default async function AdminUnggahanDetailPage({ params }: Ctx) {
           {job.workerId ? ` · dibaca ${job.workerId}` : ""}
         </p>
       </div>
+
+      {totalHalaman > 0 && (
+        <div className="flex flex-wrap items-center gap-2.5 rounded-panel border border-line bg-surface px-5 py-4">
+          <span className="text-[13.5px] font-semibold text-ink-2">Ambil hasil mentahnya:</span>
+          <TombolSalinTeks teks={seluruhTeks} label="Salin seluruh teks" />
+          <a
+            href={`/api/admin/unggahan/${job.id}/mentah?format=teks`}
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-lg border border-line px-3 py-1.5 text-[12.5px] font-semibold text-ink-2 no-underline transition-colors hover:border-teal hover:text-teal hover:no-underline"
+          >
+            Buka sebagai teks
+          </a>
+          <a
+            href={`/api/admin/unggahan/${job.id}/mentah`}
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-lg border border-line px-3 py-1.5 text-[12.5px] font-semibold text-ink-2 no-underline transition-colors hover:border-teal hover:text-teal hover:no-underline"
+          >
+            Buka sebagai JSON
+          </a>
+        </div>
+      )}
 
       {job.galat && (
         <p className="m-0 rounded-panel bg-wrong-bg px-5 py-4 text-[14px] font-semibold text-wrong-fg">
@@ -118,6 +147,8 @@ export default async function AdminUnggahanDetailPage({ params }: Ctx) {
                         {(h.msProses / 1000).toFixed(1)} DETIK
                       </span>
                     )}
+                    <span className="flex-1" />
+                    <TombolSalinTeks teks={h.teks} label="Salin halaman ini" />
                   </div>
 
                   {/* Teks apa adanya — inilah yang nanti dibaca model perapi. */}
@@ -162,6 +193,15 @@ export default async function AdminUnggahanDetailPage({ params }: Ctx) {
                       </div>
                     </details>
                   )}
+
+                  <details className="text-[13px]">
+                    <summary className="cursor-pointer font-semibold text-ink-2">
+                      JSON mentah apa adanya
+                    </summary>
+                    <pre className="mt-2.5 max-h-[320px] overflow-auto whitespace-pre-wrap break-all rounded-xl bg-forest px-4 py-3 font-mono text-[11.5px] leading-[1.6] text-mint-soft">
+                      {h.baris}
+                    </pre>
+                  </details>
                 </article>
               );
             })
