@@ -397,6 +397,12 @@ ikut dihitung saat memeriksa penurunan konten maupun saat menyapu gambar yatim
 (`src/lib/unggah/pemakai.ts`) — tanpa itu, menurunkan aktivitas tidak
 menghentikan penyajian gambar pilihannya.
 
+**Gambar yatim.** Gambar yang tidak lagi dipakai dibuang saat aktivitasnya
+dihapus maupun saat soalnya disunting — penyuntingan menulis ulang seluruh
+soal, jadi gambar yang dilepas gurunya tidak punya pemilik lagi. Tiap kunci
+diperiksa ulang sebelum dihapus: satu gambar bisa saja masih dipakai aktivitas
+lain, dan menghapusnya akan merusak soal yang tidak bersalah.
+
 ### Soal yang terpotong antarhalaman
 
 Satu soal bisa mulai di halaman N dan pilihannya ada di N+1. Model menandai
