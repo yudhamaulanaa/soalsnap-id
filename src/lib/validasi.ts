@@ -115,6 +115,42 @@ export const klaimSchema = z.object({
   editSlugs: z.array(z.string().trim().min(10).max(40)).min(1).max(200),
 });
 
+/** Worker meminta job berikutnya. */
+export const klaimWorkerSchema = z.object({
+  workerId: z.string().trim().min(1).max(80),
+});
+
+export const progresWorkerSchema = z.object({
+  progres: z.number().int().min(0).max(100),
+  tahap: z.string().trim().max(120).optional(),
+});
+
+const ocrBarisSchema = z.object({
+  teks: z.string().max(4000),
+  konfidensi: z.number().min(0).max(100),
+  kotak: z.array(z.number()).length(4),
+});
+
+/** Hasil OCR mentah satu halaman, dilaporkan worker. */
+export const hasilWorkerSchema = z.object({
+  halaman: z
+    .array(
+      z.object({
+        uploadKey: z.string().min(1).max(300),
+        halaman: z.number().int().min(1).max(500),
+        teks: z.string().max(200_000),
+        baris: z.array(ocrBarisSchema).max(3000),
+        konfidensiMin: z.number().int().min(0).max(100),
+        konfidensiRata: z.number().int().min(0).max(100),
+        msProses: z.number().int().min(0).max(3_600_000).optional(),
+      }),
+    )
+    .max(500)
+    .optional(),
+  /** Diisi kalau worker gagal; job ditandai gagal beserta alasannya. */
+  galat: z.string().trim().max(500).optional(),
+});
+
 export const masukAdminSchema = z.object({
   sandi: z.string().min(1).max(200),
 });

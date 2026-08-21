@@ -27,3 +27,17 @@ export function labelStatus(status: string): string {
   if (status === "diabaikan") return "Diabaikan";
   return status;
 }
+
+/** Status job pembacaan dokumen, dari dibuat sampai ditutup. */
+export const STATUS_JOB = ["menyusun", "antre", "diproses", "terbaca", "gagal"] as const;
+
+export function labelStatusJob(status: string): string {
+  const label: Record<string, string> = {
+    menyusun: "Menyusun",
+    antre: "Antre",
+    diproses: "Diproses",
+    terbaca: "Terbaca",
+    gagal: "Gagal",
+  };
+  return label[status] ?? status;
+}

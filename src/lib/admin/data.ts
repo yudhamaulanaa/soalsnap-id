@@ -13,15 +13,17 @@ export interface FilterAktivitas {
 }
 
 export async function ringkasanAdmin() {
-  const [aktivitas, publik, diturunkan, laporanBaru, soal, sesi] = await Promise.all([
+  const [aktivitas, publik, diturunkan, laporanBaru, soal, sesi, jobAntre, jobTerbaca] = await Promise.all([
     prisma.activity.count(),
     prisma.activity.count({ where: { visibility: "public" } }),
     prisma.activity.count({ where: { takedownAt: { not: null } } }),
     prisma.report.count({ where: { status: "baru" } }),
     prisma.question.count(),
     prisma.playSession.count(),
+    prisma.parseJob.count({ where: { status: { in: ["antre", "diproses"] } } }),
+    prisma.parseJob.count({ where: { status: "terbaca" } }),
   ]);
-  return { aktivitas, publik, diturunkan, laporanBaru, soal, sesi };
+  return { aktivitas, publik, diturunkan, laporanBaru, soal, sesi, jobAntre, jobTerbaca };
 }
 
 export async function cariAktivitas(filter: FilterAktivitas) {
@@ -66,6 +68,47 @@ export async function aktivitasLengkap(id: string) {
       reports: { orderBy: { createdAt: "desc" } },
       sessions: { orderBy: { createdAt: "desc" }, take: 50 },
       _count: { select: { sessions: true } },
+    },
+  });
+}
+
+/** Antrean unggahan beserta ringkas hasil bacanya. */
+export async function daftarJob(status: string | undefined, halaman: number) {
+  const where = status ? { status } : {};
+  const [total, baris] = await Promise.all([
+    prisma.parseJob.count({ where }),
+    prisma.parseJob.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (halaman - 1) * PER_HALAMAN,
+      take: PER_HALAMAN,
+      include: {
+        uploads: {
+          orderBy: { urutan: "asc" },
+          select: {
+            id: true,
+            namaAsli: true,
+            kind: true,
+            halaman: true,
+            _count: { select: { halamanOcr: true } },
+          },
+        },
+      },
+    }),
+  ]);
+
+  return { baris, total, totalHalaman: Math.max(1, Math.ceil(total / PER_HALAMAN)) };
+}
+
+/** Satu job lengkap dengan seluruh halaman OCR mentahnya. */
+export async function jobLengkap(id: string) {
+  return prisma.parseJob.findUnique({
+    where: { id },
+    include: {
+      uploads: {
+        orderBy: { urutan: "asc" },
+        include: { halamanOcr: { orderBy: { halaman: "asc" } } },
+      },
     },
   });
 }

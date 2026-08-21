@@ -79,6 +79,14 @@ export async function urlUnggah(key: string, contentType: string): Promise<strin
   );
 }
 
+/** URL GET bertanda tangan; dipakai worker mengunduh berkas tanpa kunci R2. */
+export async function urlUnduh(key: string, umurDetik = UMUR_TAUTAN_DETIK): Promise<string> {
+  const { klien, bucket } = klienR2();
+  return getSignedUrl(klien, new GetObjectCommand({ Bucket: bucket, Key: key }), {
+    expiresIn: umurDetik,
+  });
+}
+
 export type Objek = { ada: false } | { ada: true; ukuran: number; contentType: string };
 
 /**

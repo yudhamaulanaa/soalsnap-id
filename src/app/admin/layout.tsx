@@ -14,6 +14,7 @@ const NAV = [
   { href: "/admin", label: "Ringkasan" },
   { href: "/admin/aktivitas", label: "Aktivitas" },
   { href: "/admin/laporan", label: "Laporan" },
+  { href: "/admin/unggahan", label: "Unggahan" },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
