@@ -35,8 +35,9 @@ yang menggantikan akun:
 
 `editSlug` tidak pernah ikut dalam respons API publik maupun katalog. Peramban
 pembuat menyimpan daftar tautan suntingnya di `localStorage` supaya muncul di
-Dashboard — itu satu-satunya "kepemilikan" yang ada bagi tamu, jadi kalau tautannya
-hilang dan penyimpanan peramban terhapus, aktivitas tidak bisa disunting lagi.
+bagian "Aktivitas Saya" pada halaman depan — itu satu-satunya "kepemilikan" yang
+ada bagi tamu, jadi kalau tautannya hilang dan penyimpanan peramban terhapus,
+aktivitas tidak bisa disunting lagi.
 [Masuk lewat tautan email](#masuk-lewat-tautan-email-opsional) ada justru untuk
 menutup celah itu, dan tetap opsional.
 
@@ -45,7 +46,17 @@ menutup celah itu, dan tetap opsional.
 `/` adalah halaman pengenalan untuk pengunjung baru, ditranskripsi dari
 `project/Page 10 Landing.dc.html`. Nilai px, warna, dan bayangannya disalin apa
 adanya; warnanya kebetulan sudah menjadi token di `globals.css`, jadi yang dipakai
-token. Dashboard pindah ke `/dashboard`.
+token.
+
+Halaman Dashboard yang lama sudah dibuang. Yang masih terpakai darinya pindah ke
+halaman depan:
+
+- **"Aktivitas Saya"** — daftar aktivitas dari `localStorage` peramban ini —
+  tepat di bawah hero. Bagian itu tidak tampil sama sekali bagi pengunjung yang
+  belum pernah membuat soal, jadi halaman depan tetap seperti artboard-nya.
+- **Tautan ke katalog publik**, yang dulu hanya ada di hero Dashboard, kini masuk
+  nav dan footer. Nav ikut sembunyi di bawah 768px seperti butir lainnya, jadi
+  footer yang menanggungnya di layar sempit.
 
 Dua hal berbeda dari artboard-nya, keduanya disengaja:
 
@@ -67,8 +78,8 @@ dipulihkan di breakpoint — sehingga tampilan desktop tidak ikut berubah sediki
 Tiga keputusan yang perlu diketahui:
 
 - **Header aplikasi** menyembunyikan tautan "Kumpulan soal" di bawah 640px supaya
-  tombol utama tetap muat. Katalog tetap terjangkau dari hero Dashboard dan footer
-  landing.
+  tombol utama tetap muat. Katalog tetap terjangkau dari nav dan footer halaman
+  depan.
 - **Header admin** membungkus ke baris kedua di layar sempit, karena memaksakan satu
   baris mendorong tombol keluar ke luar layar.
 - **Tabel admin dan Soal Saya** menggeser mendatar di dalam wadahnya sendiri, bukan
@@ -124,7 +135,6 @@ yang sedang berjalan.
 | Rute | Halaman desain |
 |---|---|
 | `/` | 10 Landing — halaman pengenalan untuk pengunjung baru |
-| `/dashboard` | 01 Dashboard — aktivitas peramban ini + soal publik terbaru |
 | `/buat` | 02 Unggah |
 | `/buat/proses` | 03 Proses AI |
 | `/buat/review` | 04 Review Draft |

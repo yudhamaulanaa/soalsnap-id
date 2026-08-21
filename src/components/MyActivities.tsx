@@ -14,6 +14,13 @@ export function MyActivities() {
   const mine = useStore((s) => s.mine);
   const baruId = useStore((s) => s.mine[0]?.editSlug);
 
+  // Kosong berarti peramban ini belum pernah membuat apa pun — di halaman depan
+  // bagian bertuliskan "0 aktivitas" cuma mengganggu, dan ajakan membuat soal
+  // sudah ada di hero. Store sengaja tidak dihidrasi pada render pertama
+  // (`skipHydration`), jadi menyembunyikannya di sini tidak membuat HTML server
+  // dan klien berbeda.
+  if (mine.length === 0) return null;
+
   return (
     <section className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
@@ -25,7 +32,7 @@ export function MyActivities() {
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(255px,1fr))] gap-[18px]">
-        {/* Kartu ajakan selalu di posisi pertama (FR-DB-3). */}
+        {/* Kartu ajakan tetap di posisi pertama (FR-DB-3). */}
         <Link
           href="/buat"
           className="flex min-h-[230px] flex-col items-center justify-center gap-3 rounded-panel border-2 border-dashed border-line-hover bg-white/60 no-underline transition-colors hover:border-teal hover:bg-surface hover:no-underline"

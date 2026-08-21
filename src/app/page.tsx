@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { KameraIcon } from "@/components/Icons";
+import { MyActivities } from "@/components/MyActivities";
 
 export const metadata = {
   title: "SoalSnap — Foto soalnya, jadi latihannya",
@@ -33,12 +34,13 @@ export default function LandingPage() {
             </span>
           </div>
 
-          {/* Jangkar bagian disembunyikan di layar sempit — ketiganya masih ada
-              di footer, dan ruang header lebih dibutuhkan tombol utama. */}
+          {/* Nav disembunyikan di layar sempit — seluruh butirnya masih ada di
+              footer, dan ruang header lebih dibutuhkan tombol utama. */}
           <nav className="hidden flex-1 items-center gap-6 md:flex">
             <TautanNav href="#cara">Cara kerja</TautanNav>
             <TautanNav href="#template">Template</TautanNav>
             <TautanNav href="#harga">Harga</TautanNav>
+            <TautanNav href="/kumpulan">Kumpulan soal</TautanNav>
           </nav>
 
           <span className="flex-1 md:hidden" />
@@ -169,6 +171,15 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ── Aktivitas dari peramban ini ──────────────────────────────────── */}
+      {/* Jalan pulang bagi yang membuat soal tanpa akun: tanpa bagian ini,
+          satu-satunya jejak ke soal mereka adalah tautan sunting di email.
+          Tidak tampil sama sekali bagi pengunjung baru, jadi halaman depan
+          tetap seperti artboard-nya. */}
+      <div className="mx-auto w-full max-w-[1160px] px-6 py-4 empty:hidden">
+        <MyActivities />
+      </div>
 
       {/* ── Cara kerja ───────────────────────────────────────────────────── */}
       <section
@@ -557,10 +568,13 @@ export default function LandingPage() {
             <span className="font-display text-[18px] font-extrabold text-surface">SoalSnap</span>
           </div>
           <span className="flex-1" />
-          <div className="flex gap-[22px] text-[14px] font-semibold">
+          {/* Boleh turun baris: di 320px empat butir tidak muat sebaris, dan
+              tiap butirnya sendiri ditahan agar tidak patah di tengah kata. */}
+          <div className="flex flex-wrap gap-x-[22px] gap-y-2 text-[14px] font-semibold">
             <TautanFooter href="#cara">Cara kerja</TautanFooter>
             <TautanFooter href="#template">Template</TautanFooter>
             <TautanFooter href="#harga">Harga</TautanFooter>
+            <TautanFooter href="/kumpulan">Kumpulan soal</TautanFooter>
           </div>
           <div className="text-[13px] text-mint-dim">© 2026 SoalSnap</div>
         </div>
@@ -569,14 +583,18 @@ export default function LandingPage() {
   );
 }
 
+/**
+ * Jangkar bagian tetap `<a>` biasa; tujuan yang berupa rute memakai `Link` supaya
+ * perpindahannya di sisi klien. `whitespace-nowrap` menahan butir dua kata agar
+ * tidak patah menjadi dua baris di lebar sedang.
+ */
 function TautanNav({ href, children }: { href: string; children: ReactNode }) {
-  return (
-    <a
-      href={href}
-      className="text-[14.5px] font-semibold text-ink-2 no-underline hover:text-ink-2 hover:no-underline"
-    >
-      {children}
-    </a>
+  const kelas =
+    "whitespace-nowrap text-[14.5px] font-semibold text-ink-2 no-underline hover:text-ink-2 hover:no-underline";
+  return href.startsWith("#") ? (
+    <a href={href} className={kelas}>{children}</a>
+  ) : (
+    <Link href={href} className={kelas}>{children}</Link>
   );
 }
 
@@ -772,12 +790,10 @@ function ItemFaq({ tanya, children }: { tanya: string; children: ReactNode }) {
 }
 
 function TautanFooter({ href, children }: { href: string; children: ReactNode }) {
-  return (
-    <a
-      href={href}
-      className="text-mint-soft no-underline hover:text-surface hover:no-underline"
-    >
-      {children}
-    </a>
+  const kelas = "whitespace-nowrap text-mint-soft no-underline hover:text-surface hover:no-underline";
+  return href.startsWith("#") ? (
+    <a href={href} className={kelas}>{children}</a>
+  ) : (
+    <Link href={href} className={kelas}>{children}</Link>
   );
 }

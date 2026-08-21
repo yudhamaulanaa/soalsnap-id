@@ -38,10 +38,10 @@ function BagikanIsi() {
             Tautannya mungkin salah ketik atau aktivitasnya sudah dihapus.
           </p>
           <Link
-            href="/dashboard"
+            href="/"
             className="rounded-full bg-teal px-7 py-3.5 font-display text-base font-bold text-surface no-underline hover:text-surface hover:no-underline"
           >
-            Ke Dashboard
+            Ke halaman depan
           </Link>
         </main>
       </div>
